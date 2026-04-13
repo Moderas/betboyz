@@ -39,7 +39,7 @@ export default function Shop() {
         balance: number;
         inventory: string[];
         equippedItems: EquippedItems;
-      }>('/api/shop/buy', { method: 'POST', body: JSON.stringify({ itemId }) });
+      }>('/api/shop', { method: 'POST', body: JSON.stringify({ action: 'buy', itemId }) });
       setInventory(result.inventory);
       setEquippedItems(result.equippedItems);
       setBalance(result.balance);
@@ -57,8 +57,8 @@ export default function Shop() {
     setBusyItem(itemId ?? (category ?? 'unequip'));
     try {
       const result = await apiFetch<{ ok: boolean; equippedItems: EquippedItems }>(
-        '/api/shop/equip',
-        { method: 'POST', body: JSON.stringify({ itemId, category }) },
+        '/api/shop',
+        { method: 'POST', body: JSON.stringify({ action: 'equip', itemId, category }) },
       );
       setEquippedItems(result.equippedItems);
       toast(itemId ? 'Item equipped!' : 'Item unequipped.', 'success');

@@ -24,8 +24,7 @@ import betsId from './api/bets/[id].js';
 import betsWager from './api/bets/wager.js';
 import betsClose from './api/bets/close.js';
 import betsNull from './api/bets/null.js';
-import shopBuy from './api/shop/buy.js';
-import shopEquip from './api/shop/equip.js';
+import shop from './api/shop.js';
 import playersIndex from './api/players/index.js';
 import playersUsername from './api/players/[username].js';
 import bank from './api/bank.js';
@@ -72,8 +71,7 @@ app.get('/api/players/:username', (req, res) => {
 });
 
 // Shop
-app.post('/api/shop/buy', wrap(shopBuy));
-app.post('/api/shop/equip', wrap(shopEquip));
+app.post('/api/shop', wrap(shop));
 
 // Bank & analytics
 app.post('/api/bank', wrap(bank));
