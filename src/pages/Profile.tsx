@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import ProfileBadge from '../components/ProfileBadge';
 import AchievementBadge from '../components/AchievementBadge';
 import { computeAchievements } from '../utils/achievements';
+import { SHOP_ITEMS_BY_ID, COLOR_SCHEME_VARS } from '../utils/shopItems';
 import type { PlayerPublic, PlayerAnalytics } from '../types';
 
 function fmt(n: number) {
@@ -67,24 +68,58 @@ export default function Profile() {
   const achievements = stats ? computeAchievements(stats, player, isMe) : [];
   const earnedCount = achievements.filter((a) => a.earned).length;
 
+  const equipped = player.equippedItems ?? {};
+  const equippedEmoji = equipped.emoji ? SHOP_ITEMS_BY_ID[equipped.emoji]?.preview : null;
+  const equippedTitle = equipped.profileTitle ? SHOP_ITEMS_BY_ID[equipped.profileTitle]?.name : null;
+  const nameAnimClass = equipped.nameAnimation ? `name-anim-${equipped.nameAnimation.replace('anim_', '')}` : '';
+  const borderClass = equipped.profileBorder ? `profile-border-${equipped.profileBorder.replace('border_', '').replace(/_/g, '-')}` : '';
+  const schemeVars = equipped.colorScheme ? COLOR_SCHEME_VARS[equipped.colorScheme] ?? {} : {};
+  const schemeStyle = Object.keys(schemeVars).length > 0
+    ? (schemeVars as React.CSSProperties & Record<string, string>)
+    : {};
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       {/* Profile header */}
-      <div className="card">
+      <div
+        className={`card${borderClass ? ` ${borderClass}` : ''}`}
+        style={schemeStyle}
+      >
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div>
             <h1
-              className="font-display"
-              style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900, color: 'var(--color-text-primary)' }}
+              className={`font-display${nameAnimClass ? ` ${nameAnimClass}` : ''}`}
+              style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900, color: 'var(--color-text-primary)', display: 'inline-block' }}
             >
               {player.username}
-              {isMe && (
-                <span style={{ fontSize: '1rem', marginLeft: '0.5rem', color: 'var(--color-text-muted)', fontFamily: 'var(--font-body)', fontWeight: 400 }}>
-                  (you)
-                </span>
+              {equippedEmoji && (
+                <span style={{ marginLeft: '0.35rem', fontFamily: 'var(--font-body)' }}>{equippedEmoji}</span>
               )}
             </h1>
-            <p className="text-muted" style={{ margin: '0.2rem 0 0', fontSize: '0.85rem' }}>
+            {isMe && (
+              <span style={{ fontSize: '0.85rem', marginLeft: '0.5rem', color: 'var(--color-text-muted)' }}>
+                (you)
+              </span>
+            )}
+            {equippedTitle && (
+              <div style={{ marginTop: '0.25rem' }}>
+                <span
+                  style={{
+                    display: 'inline-block',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    padding: '0.15rem 0.6rem',
+                    borderRadius: '9999px',
+                    background: 'rgba(245,200,66,0.12)',
+                    color: 'var(--color-gold)',
+                    border: '1px solid rgba(245,200,66,0.25)',
+                  }}
+                >
+                  {equippedTitle}
+                </span>
+              </div>
+            )}
+            <p className="text-muted" style={{ margin: '0.3rem 0 0', fontSize: '0.85rem' }}>
               Member since {new Date(player.createdAt).toLocaleDateString()}
             </p>
             {earnedCount > 0 && (

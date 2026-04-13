@@ -239,6 +239,97 @@ body {
   border-color: var(--color-border);
 }
 
+/* ── Name Animations (shop items) ────────────────────────────── */
+@keyframes name-pulse-glow {
+  0%, 100% { text-shadow: 0 0 4px rgba(245, 200, 66, 0.2); }
+  50%       { text-shadow: 0 0 18px rgba(245, 200, 66, 0.9), 0 0 32px rgba(245, 200, 66, 0.4); }
+}
+.name-anim-glow {
+  animation: name-pulse-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes name-rainbow {
+  0%   { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+.name-anim-rainbow {
+  animation: name-rainbow 4s linear infinite;
+}
+
+@keyframes name-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.name-anim-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-gold) 20%,
+    #fff 50%,
+    var(--color-gold) 80%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: name-shimmer 2.5s linear infinite;
+}
+
+@keyframes name-tremor {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  20%       { transform: translate(-1px, 1px) rotate(-0.5deg); }
+  40%       { transform: translate(1px, -1px) rotate(0.5deg); }
+  60%       { transform: translate(-1px, 0) rotate(-0.3deg); }
+  80%       { transform: translate(1px, 1px) rotate(0.3deg); }
+}
+.name-anim-tremor {
+  display: inline-block;
+  animation: name-tremor 0.6s ease-in-out infinite;
+}
+
+/* ── Profile Borders (shop items) ────────────────────────────── */
+@keyframes border-gold-pulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(245, 200, 66, 0.3), inset 0 0 6px rgba(245, 200, 66, 0.05); }
+  50%       { box-shadow: 0 0 22px rgba(245, 200, 66, 0.7), inset 0 0 12px rgba(245, 200, 66, 0.1); }
+}
+.profile-border-gold-glow {
+  border-color: rgba(245, 200, 66, 0.6) !important;
+  animation: border-gold-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes border-neon-blue-pulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(74, 158, 255, 0.3), inset 0 0 6px rgba(74, 158, 255, 0.05); }
+  50%       { box-shadow: 0 0 22px rgba(74, 158, 255, 0.7), inset 0 0 12px rgba(74, 158, 255, 0.1); }
+}
+.profile-border-neon-blue {
+  border-color: rgba(74, 158, 255, 0.6) !important;
+  animation: border-neon-blue-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes border-inferno-pulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(255, 87, 87, 0.3), inset 0 0 6px rgba(255, 87, 87, 0.05); }
+  50%       { box-shadow: 0 0 22px rgba(255, 87, 87, 0.7), inset 0 0 12px rgba(255, 87, 87, 0.1); }
+}
+.profile-border-inferno {
+  border-color: rgba(255, 87, 87, 0.6) !important;
+  animation: border-inferno-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes border-rainbow-spin {
+  0%   { outline-color: hsl(0,   100%, 60%); }
+  17%  { outline-color: hsl(60,  100%, 60%); }
+  33%  { outline-color: hsl(120, 100%, 60%); }
+  50%  { outline-color: hsl(180, 100%, 60%); }
+  67%  { outline-color: hsl(240, 100%, 60%); }
+  83%  { outline-color: hsl(300, 100%, 60%); }
+  100% { outline-color: hsl(360, 100%, 60%); }
+}
+.profile-border-rainbow {
+  outline: 3px solid hsl(0, 100%, 60%);
+  outline-offset: 2px;
+  animation: border-rainbow-spin 2s linear infinite;
+  border-color: transparent !important;
+}
+
 /* ── Progress bar ────────────────────────────────────────────── */
 .progress-track {
   height: 8px;

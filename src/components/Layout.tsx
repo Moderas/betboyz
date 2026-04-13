@@ -78,6 +78,12 @@ export default function Layout() {
           >
             Analytics
           </NavLink>
+          <NavLink
+            to="/shop"
+            className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+          >
+            Shop
+          </NavLink>
 
           {session ? (
             <>

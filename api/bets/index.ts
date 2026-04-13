@@ -37,10 +37,12 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
     const username = await requireAuth(req);
     if (!username) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { description, minimumBet, options } = req.body as {
+    const { description, minimumBet, options, betType, line } = req.body as {
       description?: string;
       minimumBet?: number;
       options?: string[];
+      betType?: string;
+      line?: number;
     };
 
     if (!description || description.trim().length < 5) {
@@ -49,26 +51,55 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
     if (!minimumBet || minimumBet < 1) {
       return res.status(400).json({ error: 'Minimum bet must be at least 1' });
     }
-    if (!options || options.length < 2 || options.length > 8) {
-      return res.status(400).json({ error: 'Need between 2 and 8 options' });
-    }
-    if (options.some((o) => !o || o.trim().length === 0)) {
-      return res.status(400).json({ error: 'All options must be non-empty' });
-    }
 
     const now = Date.now();
-    const bet: BetRecord = {
-      id: randomUUID(),
-      creator: username,
-      description: description.trim(),
-      minimumBet: Math.floor(minimumBet),
-      options: options.map((label) => ({ label: label.trim(), totalWagered: 0 })),
-      status: 'open',
-      winningOptionIndex: null,
-      totalPool: 0,
-      createdAt: now,
-      closedAt: null,
-    };
+    let bet: BetRecord;
+
+    if (betType === 'over-under') {
+      if (line === undefined || line === null || line < 0 || line > 10000 || !Number.isInteger(line)) {
+        return res.status(400).json({ error: 'Line must be a whole number between 0 and 10,000' });
+      }
+      bet = {
+        id: randomUUID(),
+        creator: username,
+        description: description.trim(),
+        minimumBet: Math.floor(minimumBet),
+        options: [
+          { label: `Over ${line}`, totalWagered: 0 },
+          { label: `Under ${line}`, totalWagered: 0 },
+        ],
+        status: 'open',
+        winningOptionIndex: null,
+        totalPool: 0,
+        createdAt: now,
+        closedAt: null,
+        nulledAt: null,
+        betType: 'over-under',
+        overUnderLine: line,
+      };
+    } else {
+      if (!options || options.length < 2 || options.length > 8) {
+        return res.status(400).json({ error: 'Need between 2 and 8 options' });
+      }
+      if (options.some((o) => !o || o.trim().length === 0)) {
+        return res.status(400).json({ error: 'All options must be non-empty' });
+      }
+      bet = {
+        id: randomUUID(),
+        creator: username,
+        description: description.trim(),
+        minimumBet: Math.floor(minimumBet),
+        options: options.map((label) => ({ label: label.trim(), totalWagered: 0 })),
+        status: 'open',
+        winningOptionIndex: null,
+        totalPool: 0,
+        createdAt: now,
+        closedAt: null,
+        nulledAt: null,
+        betType: 'standard',
+        overUnderLine: null,
+      };
+    }
 
     const analytics = await getGlobalAnalytics();
     analytics.totalBetsCreated += 1;

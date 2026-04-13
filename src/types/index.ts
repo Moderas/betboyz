@@ -1,3 +1,7 @@
+export type ShopCategory = 'emoji' | 'colorScheme' | 'nameAnimation' | 'profileTitle' | 'profileBorder';
+
+export type EquippedItems = Partial<Record<ShopCategory, string>>;
+
 export interface PlayerRecord {
   username: string;
   pinHash: string;
@@ -6,6 +10,8 @@ export interface PlayerRecord {
   bankRequestCount: number;
   lastBankRequest: number | null;
   createdAt: number;
+  inventory: string[];
+  equippedItems: EquippedItems;
 }
 
 export interface PlayerPublic {
@@ -14,6 +20,8 @@ export interface PlayerPublic {
   embarrassingThings: string[];
   bankRequestCount: number;
   createdAt: number;
+  inventory: string[];
+  equippedItems: EquippedItems;
 }
 
 export interface BetOption {
@@ -21,7 +29,8 @@ export interface BetOption {
   totalWagered: number;
 }
 
-export type BetStatus = 'open' | 'closed';
+export type BetStatus = 'open' | 'closed' | 'nulled';
+export type BetType = 'standard' | 'over-under';
 
 export interface BetRecord {
   id: string;
@@ -34,6 +43,9 @@ export interface BetRecord {
   totalPool: number;
   createdAt: number;
   closedAt: number | null;
+  nulledAt: number | null;
+  betType: BetType;
+  overUnderLine: number | null;
 }
 
 export interface WagerRecord {

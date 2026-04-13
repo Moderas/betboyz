@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { PlayerPublic } from '../types';
+import { SHOP_ITEMS_BY_ID } from '../utils/shopItems';
 
 interface Props {
   player: PlayerPublic;
@@ -20,6 +21,9 @@ const medalColors: Record<number, string> = {
 export default function PlayerRow({ player, rank, currentUsername }: Props) {
   const isMe = player.username === currentUsername;
   const medal = medalColors[rank];
+  const equippedEmoji = player.equippedItems?.emoji
+    ? SHOP_ITEMS_BY_ID[player.equippedItems.emoji]?.preview
+    : null;
 
   return (
     <div
@@ -60,6 +64,9 @@ export default function PlayerRow({ player, rank, currentUsername }: Props) {
           }}
         >
           {player.username}
+          {equippedEmoji && (
+            <span style={{ marginLeft: '0.25rem' }}>{equippedEmoji}</span>
+          )}
           {isMe && (
             <span style={{ fontSize: '0.75rem', marginLeft: '0.4rem', color: 'var(--color-text-muted)' }}>
               (you)

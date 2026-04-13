@@ -25,19 +25,22 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
 
   for (const betId of closedIds) {
     const [bet, wagers] = await Promise.all([getBet(betId), getWagers(betId)]);
-    if (!bet || bet.winningOptionIndex === null) continue;
+    if (!bet) continue;
 
     const myWagers = wagers.filter((w) => w.player === username);
     if (myWagers.length === 0) continue;
 
-    const { payouts } = calculatePayouts(bet, wagers);
-    const received = payouts[username] ?? 0;
-
+    // Always count bets placed/wagered
     for (const w of myWagers) {
       stats.totalBetsPlaced += 1;
       stats.totalShekelsWagered += w.amount;
     }
 
+    // Skip win/loss/P&L for nulled bets or bets with no winner
+    if (bet.status === 'nulled' || bet.winningOptionIndex === null) continue;
+
+    const { payouts } = calculatePayouts(bet, wagers);
+    const received = payouts[username] ?? 0;
     const totalBetByMe = myWagers.reduce((s, w) => s + w.amount, 0);
     stats.netProfitLoss += received - totalBetByMe;
 
@@ -57,6 +60,8 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
     embarrassingThings: player.embarrassingThings,
     bankRequestCount: player.bankRequestCount,
     createdAt: player.createdAt,
+    inventory: player.inventory ?? [],
+    equippedItems: player.equippedItems ?? {},
   };
 
   return res.status(200).json({ player: publicPlayer, stats });

@@ -34,10 +34,9 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
 
   for (const betId of closedIds) {
     const [bet, wagers] = await Promise.all([getBet(betId), getWagers(betId)]);
-    if (!bet || bet.winningOptionIndex === null) continue;
+    if (!bet) continue;
 
-    const { payouts } = calculatePayouts(bet, wagers);
-
+    // Always count bets placed and shekels wagered
     const playerWagers: Record<string, number> = {};
     for (const w of wagers) {
       playerWagers[w.player] = (playerWagers[w.player] ?? 0) + w.amount;
@@ -46,6 +45,11 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
       s.totalBetsPlaced += 1;
       s.totalShekelsWagered += w.amount;
     }
+
+    // Skip win/loss/P&L for nulled bets or bets with no winner
+    if (bet.status === 'nulled' || bet.winningOptionIndex === null) continue;
+
+    const { payouts } = calculatePayouts(bet, wagers);
 
     for (const [pUsername, totalBet] of Object.entries(playerWagers)) {
       const s = playerStats[pUsername];

@@ -9,6 +9,7 @@ import { useToast } from '../components/Toast';
 import type { BetRecord, WagerRecord } from '../types';
 import type { z } from 'zod';
 
+
 type WagerForm = z.infer<typeof wagerSchema>;
 
 function fmt(n: number) {
@@ -22,7 +23,7 @@ function pct(part: number, total: number) {
 
 export default function BetDetail() {
   const { id } = useParams<{ id: string }>();
-  const { session } = useAuth();
+  const { session, updateBalance } = useAuth();
   const { apiFetch } = useApi();
   const toast = useToast();
 
@@ -31,6 +32,7 @@ export default function BetDetail() {
   const [loading, setLoading] = useState(true);
   const [closingOptionIdx, setClosingOptionIdx] = useState(0);
   const [closing, setClosing] = useState(false);
+  const [nulling, setNulling] = useState(false);
   const [balance, setBalance] = useState<number | null>(null);
 
   const {
@@ -76,6 +78,7 @@ export default function BetDetail() {
         body: JSON.stringify({ betId: id, ...data }),
       });
       setBalance(result.balance);
+      updateBalance(result.balance);
       toast(`Wager placed! Balance: ${fmt(result.balance)} ₪`);
       await fetchBet();
     } catch (err) {
@@ -105,6 +108,23 @@ export default function BetDetail() {
     }
   };
 
+  const onNull = async () => {
+    if (!bet || !window.confirm('Null this bet? All wagers will be refunded.')) return;
+    setNulling(true);
+    try {
+      await apiFetch('/api/bets/null', {
+        method: 'POST',
+        body: JSON.stringify({ betId: id }),
+      });
+      toast('Bet nulled. All wagers refunded.');
+      await fetchBet();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to null bet', 'error');
+    } finally {
+      setNulling(false);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -127,10 +147,11 @@ export default function BetDetail() {
 
   const isCreator = session?.username === bet.creator;
   const isOpen = bet.status === 'open';
+  const isNulled = bet.status === 'nulled';
 
-  // Build payout preview for closed bets
+  // Build payout preview for closed (non-nulled) bets
   let payouts: Record<string, number> = {};
-  if (!isOpen && bet.winningOptionIndex !== null) {
+  if (!isOpen && !isNulled && bet.winningOptionIndex !== null) {
     const winIdx = bet.winningOptionIndex;
     const winningWagers = wagers.filter((w) => w.optionIndex === winIdx);
     const winningTotal = winningWagers.reduce((s, w) => s + w.amount, 0);
@@ -160,8 +181,8 @@ export default function BetDetail() {
           >
             {bet.description}
           </h1>
-          <span className={`badge ${isOpen ? 'badge-open' : 'badge-closed'}`}>
-            {isOpen ? 'Open' : 'Closed'}
+          <span className={`badge ${isOpen ? 'badge-open' : isNulled ? 'badge-gold' : 'badge-closed'}`}>
+            {isOpen ? 'Open' : isNulled ? 'Nulled' : 'Closed'}
           </span>
         </div>
         <div
@@ -176,10 +197,16 @@ export default function BetDetail() {
           <span>
             By <Link to={`/player/${bet.creator}`} style={{ color: 'var(--color-gold-dim)', textDecoration: 'none' }}>{bet.creator}</Link>
           </span>
+          {(bet.betType === 'over-under') && bet.overUnderLine !== null && (
+            <span>
+              Line: <strong className="text-gold">{bet.overUnderLine}</strong>
+              <span className="text-muted"> (Over / Under)</span>
+            </span>
+          )}
           <span>Min bet: <strong className="text-gold">{fmt(bet.minimumBet)} ₪</strong></span>
           <span>Pool: <strong className="text-gold">{fmt(bet.totalPool)} ₪</strong></span>
           {!isOpen && bet.closedAt && (
-            <span>Closed: {new Date(bet.closedAt).toLocaleDateString()}</span>
+            <span>{isNulled ? 'Nulled' : 'Closed'}: {new Date(bet.closedAt).toLocaleDateString()}</span>
           )}
         </div>
       </div>
@@ -340,13 +367,14 @@ export default function BetDetail() {
         </div>
       )}
 
-      {/* Close bet (creator only, open) */}
+      {/* Close / Null bet (creator only, open) */}
       {isOpen && isCreator && (
         <div className="card" style={{ border: '1px solid rgba(255,87,87,0.3)' }}>
           <h2 style={{ margin: '0 0 1rem', fontSize: '1rem', fontWeight: 700, color: 'var(--color-red)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Close Bet (Creator)
+            Creator Actions
           </h2>
-          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Close */}
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
             <select
               value={closingOptionIdx}
               onChange={(e) => setClosingOptionIdx(Number(e.target.value))}
@@ -363,11 +391,46 @@ export default function BetDetail() {
             <button
               className="btn btn-danger"
               onClick={onClose}
-              disabled={closing}
+              disabled={closing || nulling}
             >
               {closing ? 'Closing…' : 'Close & Pay Out'}
             </button>
           </div>
+          {/* Null */}
+          <hr className="divider" style={{ margin: '0.5rem 0' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <div>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                <strong style={{ color: 'var(--color-text-primary)' }}>Null Bet</strong> — refunds all wagers, no winner declared.
+                Still counts as a bet placed in analytics.
+              </p>
+            </div>
+            <button
+              className="btn btn-outline btn-sm"
+              style={{ flexShrink: 0, borderColor: 'rgba(255,87,87,0.4)', color: 'var(--color-red)' }}
+              onClick={onNull}
+              disabled={nulling || closing}
+            >
+              {nulling ? 'Nulling…' : 'Null Bet'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Nulled notice */}
+      {isNulled && (
+        <div
+          className="card"
+          style={{
+            border: '1px solid rgba(245,200,66,0.25)',
+            background: 'rgba(245,200,66,0.04)',
+            textAlign: 'center',
+            padding: '1rem',
+          }}
+        >
+          <p style={{ margin: 0, fontWeight: 600, color: 'var(--color-gold-dim)' }}>
+            ⚠️ This bet was nulled. All wagers were refunded.
+          </p>
         </div>
       )}
 

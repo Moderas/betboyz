@@ -31,6 +31,8 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
     bankRequestCount: 0,
     lastBankRequest: null,
     createdAt: Date.now(),
+    inventory: [],
+    equippedItems: {},
   };
 
   await setPlayer(player);

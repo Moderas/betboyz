@@ -23,6 +23,9 @@ import betsIndex from './api/bets/index.js';
 import betsId from './api/bets/[id].js';
 import betsWager from './api/bets/wager.js';
 import betsClose from './api/bets/close.js';
+import betsNull from './api/bets/null.js';
+import shopBuy from './api/shop/buy.js';
+import shopEquip from './api/shop/equip.js';
 import playersIndex from './api/players/index.js';
 import playersUsername from './api/players/[username].js';
 import bank from './api/bank.js';
@@ -53,6 +56,7 @@ app.post('/api/auth/login', wrap(authLogin));
 // Bets — order matters: specific routes before dynamic ones
 app.post('/api/bets/wager', wrap(betsWager));
 app.post('/api/bets/close', wrap(betsClose));
+app.post('/api/bets/null', wrap(betsNull));
 app.get('/api/bets', wrap(betsIndex));
 app.post('/api/bets', wrap(betsIndex));
 app.get('/api/bets/:id', (req, res) => {
@@ -66,6 +70,10 @@ app.get('/api/players/:username', (req, res) => {
   (req as unknown as VercelRequest).query = { username: req.params.username };
   return playersUsername(req as unknown as VercelRequest, res as unknown as VercelResponse);
 });
+
+// Shop
+app.post('/api/shop/buy', wrap(shopBuy));
+app.post('/api/shop/equip', wrap(shopEquip));
 
 // Bank & analytics
 app.post('/api/bank', wrap(bank));

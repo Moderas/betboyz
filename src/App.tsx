@@ -10,6 +10,7 @@ import Leaderboard from './pages/Leaderboard';
 import Analytics from './pages/Analytics';
 import Profile from './pages/Profile';
 import Bank from './pages/Bank';
+import Shop from './pages/Shop';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { session } = useAuth();
@@ -43,6 +44,7 @@ export default function App() {
             </PrivateRoute>
           }
         />
+        <Route path="/shop" element={<Shop />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
