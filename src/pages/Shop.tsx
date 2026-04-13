@@ -3,8 +3,12 @@ import { useAuth } from '../context/AuthContext';
 import { useApi } from '../hooks/useApi';
 import { useToast } from '../components/Toast';
 import { SHOP_ITEMS, SHOP_CATEGORIES } from '../utils/shopItems';
+import { SIDEBAR_REFRESH_EVENT } from '../components/StickyPostSidebar';
 import type { EquippedItems } from '../types';
 import type { ShopCategory } from '../types';
+
+const STICKYPOST_PRICE = 10;
+const MAX_POST_LENGTH = 255;
 
 export default function Shop() {
   const { session, updateBalance } = useAuth();
@@ -17,6 +21,9 @@ export default function Shop() {
   const [loading, setLoading] = useState(true);
   const [busyItem, setBusyItem] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<ShopCategory>('emoji');
+  const [showPostForm, setShowPostForm] = useState(false);
+  const [postText, setPostText] = useState('');
+  const [postBusy, setPostBusy] = useState(false);
 
   useEffect(() => {
     if (!session) return;
@@ -69,6 +76,27 @@ export default function Shop() {
     }
   };
 
+  const handlePost = async () => {
+    if (!postText.trim()) return;
+    setPostBusy(true);
+    try {
+      const result = await apiFetch<{ ok: boolean; balance: number }>('/api/shop', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'stickypost', text: postText }),
+      });
+      setBalance(result.balance);
+      updateBalance(result.balance);
+      setPostText('');
+      setShowPostForm(false);
+      window.dispatchEvent(new CustomEvent(SIDEBAR_REFRESH_EVENT));
+      toast('StickyPost published! 📌', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Post failed', 'error');
+    } finally {
+      setPostBusy(false);
+    }
+  };
+
   const categoryItems = SHOP_ITEMS.filter((i) => i.category === activeCategory);
   const activeCategoryMeta = SHOP_CATEGORIES.find((c) => c.key === activeCategory)!;
 
@@ -86,6 +114,88 @@ export default function Shop() {
           Spend your shekels on cosmetics. Flex on the competition.
         </p>
       </div>
+
+      {/* StickyPost consumable */}
+      {session && (
+        <div
+          className="card"
+          style={{
+            padding: '1rem 1.25rem',
+            border: '1px solid rgba(245,200,66,0.2)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.9rem' }}>
+            <span style={{ fontSize: '2rem', lineHeight: 1, flexShrink: 0 }}>📌</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>StickyPost</span>
+                <span className="text-gold" style={{ fontWeight: 800 }}>{STICKYPOST_PRICE} ₪</span>
+              </div>
+              <p className="text-muted" style={{ margin: '0.2rem 0 0', fontSize: '0.8rem' }}>
+                Post a public message pinned to the board. Shows up for everyone. Max {MAX_POST_LENGTH} characters.
+              </p>
+            </div>
+            {!showPostForm && (
+              <button
+                className="btn btn-gold btn-sm"
+                style={{ flexShrink: 0 }}
+                onClick={() => setShowPostForm(true)}
+                disabled={balance === null || balance < STICKYPOST_PRICE}
+                title={balance !== null && balance < STICKYPOST_PRICE ? 'Not enough shekels' : undefined}
+              >
+                Buy & Post
+              </button>
+            )}
+          </div>
+
+          {showPostForm && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <textarea
+                value={postText}
+                onChange={(e) => setPostText(e.target.value.slice(0, MAX_POST_LENGTH))}
+                placeholder="Write something the group needs to know…"
+                rows={3}
+                style={{
+                  width: '100%',
+                  background: 'var(--color-bg-primary)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '6px',
+                  padding: '0.6rem 0.75rem',
+                  color: 'var(--color-text)',
+                  fontSize: '0.88rem',
+                  resize: 'vertical',
+                  fontFamily: 'inherit',
+                  boxSizing: 'border-box',
+                }}
+              />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                <span className="text-muted" style={{ fontSize: '0.75rem' }}>
+                  {postText.length}/{MAX_POST_LENGTH}
+                </span>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    className="btn btn-outline btn-sm"
+                    onClick={() => { setShowPostForm(false); setPostText(''); }}
+                    disabled={postBusy}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="btn btn-gold btn-sm"
+                    onClick={handlePost}
+                    disabled={postBusy || !postText.trim()}
+                  >
+                    {postBusy ? 'Posting…' : `Post for ${STICKYPOST_PRICE} ₪`}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Balance + info bar */}
       {!loading && balance !== null && (

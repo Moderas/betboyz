@@ -494,3 +494,11 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-border-gold);
 }
+
+
+/* ── Sticky Sidebar ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .sticky-sidebar {
+    display: none !important;
+  }
+}

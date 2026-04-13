@@ -27,6 +27,7 @@ import playersIndex from './api/players/index.js';
 import playersUsername from './api/players/[username].js';
 import bank from './api/bank.js';
 import analytics from './api/analytics.js';
+import stickyposts from './api/stickyposts.js';
 
 const app = express();
 app.use(express.json());
@@ -72,6 +73,10 @@ app.post('/api/shop', wrap(shop));
 // Bank & analytics
 app.post('/api/bank', wrap(bank));
 app.get('/api/analytics', wrap(analytics));
+
+// Sticky posts
+app.get('/api/stickyposts', wrap(stickyposts));
+app.delete('/api/stickyposts', wrap(stickyposts));
 
 const PORT = 3001;
 app.listen(PORT, () => {

@@ -12,6 +12,7 @@ export interface PlayerRecord {
   createdAt: number;
   inventory: string[];
   equippedItems: EquippedItems;
+  totalStickyPostsPosted: number;
 }
 
 export interface PlayerPublic {
@@ -22,6 +23,18 @@ export interface PlayerPublic {
   createdAt: number;
   inventory: string[];
   equippedItems: EquippedItems;
+  totalStickyPostsPosted: number;
+}
+
+export interface StickyPost {
+  id: string;
+  author: string;
+  text: string;
+  createdAt: number;
+}
+
+export interface StickyPostWithPlayer extends StickyPost {
+  authorEquippedItems: EquippedItems;
 }
 
 export interface BetOption {

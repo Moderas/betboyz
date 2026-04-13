@@ -1,4 +1,5 @@
 import type { PlayerAnalytics, PlayerPublic } from '../types';
+import { SHOP_ITEMS_BY_ID } from './shopItems';
 
 export interface Achievement {
   id: string;
@@ -8,7 +9,8 @@ export interface Achievement {
   earned: boolean;
 }
 
-const EXPLORER_PAGES = ['home', 'leaderboard', 'analytics', 'bank', 'profile', 'bet', 'create'];
+const EXPLORER_PAGES = ['home', 'leaderboard', 'analytics', 'bank', 'profile', 'bet', 'create', 'shop'];
+const EQUIPPABLE_CATEGORIES = ['emoji', 'colorScheme', 'nameAnimation', 'profileTitle', 'profileBorder'] as const;
 
 function getVisitedPages(): string[] {
   try {
@@ -26,6 +28,10 @@ export function computeAchievements(
   const visited = isOwnProfile ? getVisitedPages() : [];
   const ageMs = Date.now() - player.createdAt;
   const ageDays = ageMs / (1000 * 60 * 60 * 24);
+  const totalShopSpent =
+    (player.inventory ?? []).reduce((sum, id) => sum + (SHOP_ITEMS_BY_ID[id]?.price ?? 0), 0) +
+    (player.totalStickyPostsPosted ?? 0) * 10;
+  const hasDripCheck = EQUIPPABLE_CATEGORIES.every((cat) => !!player.equippedItems?.[cat]);
 
   return [
     {
@@ -125,6 +131,41 @@ export function computeAchievements(
       name: 'Old Money',
       description: 'Keep your account open for 30 days.',
       earned: ageDays >= 30,
+    },
+    {
+      id: 'town_crier',
+      icon: '📌',
+      name: 'Town Crier',
+      description: 'Post your first StickyPost.',
+      earned: (player.totalStickyPostsPosted ?? 0) >= 1,
+    },
+    {
+      id: 'megaphone',
+      icon: '📣',
+      name: 'Megaphone',
+      description: 'Post 5 StickyPosts.',
+      earned: (player.totalStickyPostsPosted ?? 0) >= 5,
+    },
+    {
+      id: 'shopaholic',
+      icon: '🛍️',
+      name: 'Shopaholic',
+      description: 'Spend a total of 500 shekels in the shop.',
+      earned: totalShopSpent >= 500,
+    },
+    {
+      id: 'collector',
+      icon: '🗂️',
+      name: 'Collector',
+      description: 'Own 10 or more shop items.',
+      earned: (player.inventory ?? []).length >= 10,
+    },
+    {
+      id: 'drip_check',
+      icon: '💅',
+      name: 'Drip Check',
+      description: 'Have at least one item equipped in every cosmetic category.',
+      earned: hasDripCheck,
     },
   ];
 }

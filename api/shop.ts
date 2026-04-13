@@ -1,9 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getPlayer, setPlayer } from './_lib/redis.js';
+import { randomUUID } from 'node:crypto';
+import { getPlayer, setPlayer, addStickyPost } from './_lib/redis.js';
 import { requireAuth } from './_lib/auth.js';
 import { handle } from './_lib/handler.js';
 import { SHOP_ITEMS_BY_ID } from '../src/utils/shopItems.js';
-import type { ShopCategory } from '../src/types/index.js';
+import type { ShopCategory, StickyPost } from '../src/types/index.js';
+
+const STICKYPOST_PRICE = 10;
 
 export default handle(async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -63,5 +66,32 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
     return res.status(200).json({ ok: true, equippedItems: player.equippedItems });
   }
 
-  return res.status(400).json({ error: 'action must be "buy" or "equip"' });
+  // ── StickyPost (consumable) ───────────────────────────────────────────────
+  if (action === 'stickypost') {
+    const { text } = req.body as { text?: string };
+    if (!text || typeof text !== 'string' || text.trim().length === 0) {
+      return res.status(400).json({ error: 'text is required' });
+    }
+    if (text.length > 255) {
+      return res.status(400).json({ error: 'Text must be 255 characters or fewer' });
+    }
+    if (player.balance < STICKYPOST_PRICE) {
+      return res.status(400).json({ error: 'Insufficient shekels' });
+    }
+
+    const post: StickyPost = {
+      id: randomUUID(),
+      author: username,
+      text: text.trim(),
+      createdAt: Date.now(),
+    };
+
+    player.balance -= STICKYPOST_PRICE;
+    player.totalStickyPostsPosted = (player.totalStickyPostsPosted ?? 0) + 1;
+
+    await Promise.all([setPlayer(player), addStickyPost(post)]);
+    return res.status(200).json({ ok: true, balance: player.balance, post });
+  }
+
+  return res.status(400).json({ error: 'action must be "buy", "equip", or "stickypost"' });
 });

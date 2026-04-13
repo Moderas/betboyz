@@ -39,6 +39,7 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
       createdAt: Date.now(),
       inventory: [],
       equippedItems: {},
+      totalStickyPostsPosted: 0,
     };
 
     await setPlayer(player);

@@ -62,6 +62,7 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
     createdAt: player.createdAt,
     inventory: player.inventory ?? [],
     equippedItems: player.equippedItems ?? {},
+    totalStickyPostsPosted: player.totalStickyPostsPosted ?? 0,
   };
 
   return res.status(200).json({ player: publicPlayer, stats });

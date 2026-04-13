@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Mascot from './Mascot';
+import StickyPostSidebar from './StickyPostSidebar';
 import { useEffect } from 'react';
 
 function trackPageVisit(pathname: string) {
@@ -13,6 +14,7 @@ function trackPageVisit(pathname: string) {
   else if (pathname.startsWith('/player/')) page = 'profile';
   else if (pathname.startsWith('/bet/')) page = 'bet';
   else if (pathname.startsWith('/create')) page = 'create';
+  else if (pathname.startsWith('/shop')) page = 'shop';
   if (page && !visited.includes(page)) {
     visited.push(page);
     localStorage.setItem('betboyz:visited_pages', JSON.stringify(visited));
@@ -160,17 +162,15 @@ export default function Layout() {
         </nav>
       </header>
 
-      <main
-        style={{
-          flex: 1,
-          maxWidth: '860px',
-          width: '100%',
-          margin: '0 auto',
-          padding: '1.5rem 1rem',
-        }}
-      >
-        <Outlet />
-      </main>
+      {/* Body row — sidebar + content */}
+      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+        {session && <StickyPostSidebar />}
+        <main style={{ flex: 1, padding: '1.5rem 1rem', minWidth: 0 }}>
+          <div style={{ maxWidth: '860px', margin: '0 auto' }}>
+            <Outlet />
+          </div>
+        </main>
+      </div>
 
       <footer
         style={{
