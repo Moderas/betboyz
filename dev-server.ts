@@ -4,6 +4,9 @@
  * without needing Vercel CLI authentication.
  * Vite proxies /api/* to this server (port 3001).
  */
+import { config } from 'dotenv';
+config(); // load .env before any Redis client is created
+
 import express from 'express';
 import type { Request, Response } from 'express';
 import type { VercelRequest, VercelResponse } from '@vercel/node';

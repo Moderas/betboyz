@@ -28,7 +28,14 @@ export default function Register() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: data.username, pin: data.pin }),
       });
-      const json = await res.json();
+      const text = await res.text();
+      let json: { token?: string; username?: string; balance?: number; error?: string };
+      try {
+        json = JSON.parse(text);
+      } catch {
+        setServerError('API server is not running. Start it with: npm run dev');
+        return;
+      }
       if (!res.ok) {
         setServerError(json.error ?? 'Registration failed');
         return;
