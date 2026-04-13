@@ -61,4 +61,5 @@ export interface PlayerAnalytics {
 export interface Session {
   username: string;
   token: string;
+  balance: number;
 }

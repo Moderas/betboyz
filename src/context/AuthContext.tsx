@@ -9,8 +9,9 @@ import type { Session } from '../types';
 
 interface AuthContextValue {
   session: Session | null;
-  login: (username: string, token: string) => void;
+  login: (username: string, token: string, balance: number) => void;
   logout: () => void;
+  updateBalance: (balance: number) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -25,8 +26,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   });
 
-  const login = useCallback((username: string, token: string) => {
-    const s: Session = { username, token };
+  const login = useCallback((username: string, token: string, balance: number) => {
+    const s: Session = { username, token, balance };
     localStorage.setItem('betboyz:session', JSON.stringify(s));
     setSession(s);
   }, []);
@@ -36,8 +37,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
   }, []);
 
+  const updateBalance = useCallback((balance: number) => {
+    setSession((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, balance };
+      localStorage.setItem('betboyz:session', JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ session, login, logout }}>
+    <AuthContext.Provider value={{ session, login, logout, updateBalance }}>
       {children}
     </AuthContext.Provider>
   );

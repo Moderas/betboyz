@@ -44,7 +44,7 @@ export default function Login() {
         setServerError('Unexpected response from server');
         return;
       }
-      login(json.username, json.token);
+      login(json.username, json.token, json.balance ?? 0);
       navigate('/');
     } catch (err) {
       setServerError(err instanceof Error ? err.message : String(err));

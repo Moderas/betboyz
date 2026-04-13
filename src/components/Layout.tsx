@@ -1,9 +1,31 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Mascot from './Mascot';
+import { useEffect } from 'react';
+
+function trackPageVisit(pathname: string) {
+  const visited: string[] = JSON.parse(localStorage.getItem('betboyz:visited_pages') ?? '[]');
+  let page: string | null = null;
+  if (pathname === '/') page = 'home';
+  else if (pathname.startsWith('/leaderboard')) page = 'leaderboard';
+  else if (pathname.startsWith('/analytics')) page = 'analytics';
+  else if (pathname.startsWith('/bank')) page = 'bank';
+  else if (pathname.startsWith('/player/')) page = 'profile';
+  else if (pathname.startsWith('/bet/')) page = 'bet';
+  else if (pathname.startsWith('/create')) page = 'create';
+  if (page && !visited.includes(page)) {
+    visited.push(page);
+    localStorage.setItem('betboyz:visited_pages', JSON.stringify(visited));
+  }
+}
 
 export default function Layout() {
   const { session, logout } = useAuth();
+  const location = useLocation();
+
+  useEffect(() => {
+    trackPageVisit(location.pathname);
+  }, [location.pathname]);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -65,6 +87,26 @@ export default function Layout() {
               >
                 Bank
               </NavLink>
+
+              {/* Balance chip */}
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  padding: '0.25rem 0.7rem',
+                  borderRadius: '9999px',
+                  background: 'rgba(245,200,66,0.12)',
+                  border: '1px solid rgba(245,200,66,0.3)',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  color: 'var(--color-gold)',
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {session.balance != null ? `${session.balance.toLocaleString()} ₪` : '— ₪'}
+              </div>
+
               <NavLink
                 to={`/player/${session.username}`}
                 className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}

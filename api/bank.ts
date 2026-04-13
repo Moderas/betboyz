@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getPlayer, setPlayer } from './_lib/redis.js';
 import { requireAuth } from './_lib/auth.js';
 import { handle } from './_lib/handler.js';
-import { BANK_AMOUNT, BANK_LIFETIME_LIMIT, EMBARRASSING_PHRASES } from './_lib/bank.js';
+import { BANK_AMOUNT, EMBARRASSING_PHRASES } from './_lib/bank.js';
 
 export default handle(async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -13,16 +13,13 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
   const player = await getPlayer(username);
   if (!player) return res.status(404).json({ error: 'Player not found' });
 
-  if (player.bankRequestCount >= BANK_LIFETIME_LIMIT) {
-    return res.status(400).json({
-      error: `You've used all ${BANK_LIFETIME_LIMIT} bank requests. No more bailouts.`,
-    });
-  }
-
   const available = EMBARRASSING_PHRASES.filter(
     (p) => !player.embarrassingThings.includes(p),
   );
-  const phrase = available[Math.floor(Math.random() * available.length)];
+
+  // Cycle through phrases if all have been used
+  const pool = available.length > 0 ? available : EMBARRASSING_PHRASES;
+  const phrase = pool[Math.floor(Math.random() * pool.length)];
 
   player.balance += BANK_AMOUNT;
   player.bankRequestCount += 1;
@@ -35,6 +32,5 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
     ok: true,
     balance: player.balance,
     embarrassingThing: phrase,
-    requestsRemaining: BANK_LIFETIME_LIMIT - player.bankRequestCount,
   });
 });

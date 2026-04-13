@@ -4,10 +4,8 @@ import { useApi } from '../hooks/useApi';
 import { useToast } from '../components/Toast';
 import Mascot from '../components/Mascot';
 
-const BANK_LIMIT = 3;
-
 export default function Bank() {
-  const { session } = useAuth();
+  const { session, updateBalance } = useAuth();
   const { apiFetch } = useApi();
   const toast = useToast();
 
@@ -37,11 +35,11 @@ export default function Bank() {
         ok: boolean;
         balance: number;
         embarrassingThing: string;
-        requestsRemaining: number;
       }>('/api/bank', { method: 'POST' });
       setBalance(result.balance);
-      setRequestsUsed(BANK_LIMIT - result.requestsRemaining);
+      setRequestsUsed((n) => n + 1);
       setRevealed(result.embarrassingThing);
+      updateBalance(result.balance);
       toast(`+100 ₪ received. New balance: ${result.balance.toLocaleString()} ₪`, 'success');
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Bank request failed', 'error');
@@ -49,9 +47,6 @@ export default function Bank() {
       setRequesting(false);
     }
   };
-
-  const remaining = BANK_LIMIT - requestsUsed;
-  const canRequest = remaining > 0;
 
   return (
     <div style={{ maxWidth: '520px' }}>
@@ -75,6 +70,9 @@ export default function Bank() {
               </div>
               <div className="text-gold" style={{ fontSize: '2rem', fontWeight: 800 }}>
                 {balance !== null ? `${balance.toLocaleString()} ₪` : '—'}
+              </div>
+              <div className="text-muted" style={{ fontSize: '0.82rem', marginTop: '0.2rem' }}>
+                Bailouts taken: <strong style={{ color: 'var(--color-text-primary)' }}>{requestsUsed}</strong>
               </div>
             </div>
           </div>
@@ -106,54 +104,19 @@ export default function Bank() {
                 An embarrassing fact about you is <strong style={{ color: 'var(--color-red)' }}>publicly posted</strong> to your profile.
               </li>
               <li>
-                You can do this a maximum of <strong>{BANK_LIMIT} times</strong> ever.
+                You can do this <strong>as many times as you like</strong>.
               </li>
             </ul>
 
-            <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-              <div>
-                <span className="text-muted" style={{ fontSize: '0.82rem' }}>
-                  Requests used:{' '}
-                </span>
-                <span style={{ fontWeight: 700 }}>
-                  {requestsUsed} / {BANK_LIMIT}
-                </span>
-                {/* dots */}
-                <span style={{ marginLeft: '0.5rem' }}>
-                  {Array.from({ length: BANK_LIMIT }).map((_, i) => (
-                    <span
-                      key={i}
-                      style={{
-                        display: 'inline-block',
-                        width: '10px',
-                        height: '10px',
-                        borderRadius: '50%',
-                        background: i < requestsUsed ? 'var(--color-red)' : 'var(--color-border)',
-                        marginRight: '3px',
-                      }}
-                    />
-                  ))}
-                </span>
-              </div>
-
+            <div style={{ marginTop: '1rem' }}>
               <button
                 className="btn btn-gold animate-pulse-gold"
                 onClick={handleRequest}
-                disabled={!canRequest || requesting}
+                disabled={requesting}
               >
-                {requesting
-                  ? 'Processing…'
-                  : !canRequest
-                    ? 'No requests remaining'
-                    : 'Request 100 ₪'}
+                {requesting ? 'Processing…' : 'Request 100 ₪'}
               </button>
             </div>
-
-            {!canRequest && (
-              <p style={{ margin: '0.75rem 0 0', fontSize: '0.85rem', color: 'var(--color-red)' }}>
-                You've used all {BANK_LIMIT} lifetime requests. Manage your shekels wisely.
-              </p>
-            )}
           </div>
 
           {/* Reveal card */}

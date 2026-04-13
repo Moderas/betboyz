@@ -1,5 +1,4 @@
 export const BANK_AMOUNT = 100;
-export const BANK_LIFETIME_LIMIT = 3;
 
 export const EMBARRASSING_PHRASES: string[] = [
   'Once cried at a Shrek movie in public.',
