@@ -112,9 +112,9 @@ export default function BetDetail() {
     if (!bet || !window.confirm('Null this bet? All wagers will be refunded.')) return;
     setNulling(true);
     try {
-      await apiFetch('/api/bets/null', {
+      await apiFetch('/api/bets/close', {
         method: 'POST',
-        body: JSON.stringify({ betId: id }),
+        body: JSON.stringify({ betId: id, nullBet: true }),
       });
       toast('Bet nulled. All wagers refunded.');
       await fetchBet();

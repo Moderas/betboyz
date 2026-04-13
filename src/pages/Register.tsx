@@ -23,10 +23,10 @@ export default function Register() {
   const onSubmit = async (data: FormValues) => {
     setServerError('');
     try {
-      const res = await fetch('/api/auth/register', {
+      const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: data.username, pin: data.pin }),
+        body: JSON.stringify({ action: 'register', username: data.username, pin: data.pin }),
       });
       const text = await res.text();
       let json: { token?: string; username?: string; balance?: number; error?: string };

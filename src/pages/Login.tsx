@@ -23,10 +23,10 @@ export default function Login() {
   const onSubmit = async (data: FormValues) => {
     setServerError('');
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ action: 'login', ...data }),
       });
       const text = await res.text();
       let json: { token?: string; username?: string; balance?: number; error?: string };

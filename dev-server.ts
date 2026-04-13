@@ -17,13 +17,11 @@ import type { Request, Response } from 'express';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // API handlers
-import authRegister from './api/auth/register.js';
-import authLogin from './api/auth/login.js';
+import auth from './api/auth.js';
 import betsIndex from './api/bets/index.js';
 import betsId from './api/bets/[id].js';
 import betsWager from './api/bets/wager.js';
 import betsClose from './api/bets/close.js';
-import betsNull from './api/bets/null.js';
 import shop from './api/shop.js';
 import playersIndex from './api/players/index.js';
 import playersUsername from './api/players/[username].js';
@@ -49,13 +47,11 @@ function wrap(handler: (req: VercelRequest, res: VercelResponse) => unknown) {
 }
 
 // Auth
-app.post('/api/auth/register', wrap(authRegister));
-app.post('/api/auth/login', wrap(authLogin));
+app.post('/api/auth', wrap(auth));
 
 // Bets — order matters: specific routes before dynamic ones
 app.post('/api/bets/wager', wrap(betsWager));
 app.post('/api/bets/close', wrap(betsClose));
-app.post('/api/bets/null', wrap(betsNull));
 app.get('/api/bets', wrap(betsIndex));
 app.post('/api/bets', wrap(betsIndex));
 app.get('/api/bets/:id', (req, res) => {

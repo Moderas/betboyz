@@ -17,30 +17,60 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
   const username = await requireAuth(req);
   if (!username) return res.status(401).json({ error: 'Unauthorized' });
 
-  const { betId, winningOptionIndex } = req.body as {
+  const { betId, winningOptionIndex, nullBet } = req.body as {
     betId?: string;
     winningOptionIndex?: number;
+    nullBet?: boolean;
   };
 
-  if (!betId || winningOptionIndex === undefined) {
-    return res.status(400).json({ error: 'betId and winningOptionIndex are required' });
-  }
+  if (!betId) return res.status(400).json({ error: 'betId is required' });
 
   const [bet, wagers] = await Promise.all([getBet(betId), getWagers(betId)]);
 
   if (!bet) return res.status(404).json({ error: 'Bet not found' });
-  if (bet.status !== 'open') return res.status(400).json({ error: 'Bet is already closed' });
+  if (bet.status !== 'open') return res.status(400).json({ error: 'Bet is not open' });
   if (bet.creator !== username) {
     return res.status(403).json({ error: 'Only the creator can close this bet' });
+  }
+
+  const now = Date.now();
+
+  // ── Null ──────────────────────────────────────────────────────────────────
+  if (nullBet) {
+    const refunds: Record<string, number> = {};
+    for (const w of wagers) {
+      refunds[w.player] = (refunds[w.player] ?? 0) + w.amount;
+    }
+
+    await Promise.all(
+      Object.entries(refunds).map(async ([pUsername, amount]) => {
+        const p = await getPlayer(pUsername);
+        if (p) {
+          p.balance += amount;
+          await setPlayer(p);
+        }
+      }),
+    );
+
+    bet.status = 'nulled';
+    bet.nulledAt = now;
+    bet.closedAt = now;
+
+    await Promise.all([setBet(bet), moveToClose(betId, now)]);
+    return res.status(200).json({ ok: true, refunds });
+  }
+
+  // ── Close with winner ─────────────────────────────────────────────────────
+  if (winningOptionIndex === undefined) {
+    return res.status(400).json({ error: 'winningOptionIndex is required' });
   }
   if (winningOptionIndex < 0 || winningOptionIndex >= bet.options.length) {
     return res.status(400).json({ error: 'Invalid winning option' });
   }
 
-  const closedAt = Date.now();
   bet.status = 'closed';
   bet.winningOptionIndex = winningOptionIndex;
-  bet.closedAt = closedAt;
+  bet.closedAt = now;
 
   const { payouts } = calculatePayouts(bet, wagers);
 
@@ -54,7 +84,6 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
     }),
   );
 
-  await Promise.all([setBet(bet), moveToClose(betId, closedAt)]);
-
+  await Promise.all([setBet(bet), moveToClose(betId, now)]);
   return res.status(200).json({ ok: true, payouts });
 });
