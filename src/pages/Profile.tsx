@@ -156,6 +156,16 @@ export default function Profile() {
               value: `${pnl >= 0 ? '+' : ''}${fmt(pnl)} ₪`,
               color: pnl > 0 ? 'var(--color-green)' : pnl < 0 ? 'var(--color-red)' : undefined,
             },
+            {
+              label: 'Updoots Received',
+              value: `👍 ${fmt(player.totalUpdootsReceived ?? 0)}`,
+              color: 'var(--color-green)',
+            },
+            {
+              label: 'Downdoots Received',
+              value: `👎 ${fmt(player.totalDowndootsReceived ?? 0)}`,
+              color: 'var(--color-red)',
+            },
           ].map((s) => (
             <div key={s.label} className="card" style={{ padding: '1rem', textAlign: 'center' }}>
               <div

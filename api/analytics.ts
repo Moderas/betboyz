@@ -5,6 +5,7 @@ import {
   getBet,
   getWagers,
   getGlobalAnalytics,
+  getPlayer,
 } from './_lib/redis.js';
 import { calculatePayouts } from './_lib/payout.js';
 import { handle } from './_lib/handler.js';
@@ -19,6 +20,18 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
     getGlobalAnalytics(),
   ]);
 
+  // Fetch player records for updoot/downdoot totals
+  const playerRecords = await Promise.all(usernames.map((u) => getPlayer(u)));
+  const recordMap: Record<string, { totalUpdootsReceived: number; totalDowndootsReceived: number }> = {};
+  for (const p of playerRecords) {
+    if (p) {
+      recordMap[p.username] = {
+        totalUpdootsReceived: p.totalUpdootsReceived ?? 0,
+        totalDowndootsReceived: p.totalDowndootsReceived ?? 0,
+      };
+    }
+  }
+
   const playerStats: Record<string, PlayerAnalytics> = {};
   for (const u of usernames) {
     playerStats[u] = {
@@ -29,6 +42,8 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
       losses: 0,
       winRate: 0,
       netProfitLoss: 0,
+      totalUpdootsReceived: recordMap[u]?.totalUpdootsReceived ?? 0,
+      totalDowndootsReceived: recordMap[u]?.totalDowndootsReceived ?? 0,
     };
   }
 

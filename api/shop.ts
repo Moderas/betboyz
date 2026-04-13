@@ -84,12 +84,36 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
       author: username,
       text: text.trim(),
       createdAt: Date.now(),
+      updoots: 0,
+      downdoots: 0,
+      votes: {},
     };
 
     player.balance -= STICKYPOST_PRICE;
     player.totalStickyPostsPosted = (player.totalStickyPostsPosted ?? 0) + 1;
 
-    await Promise.all([setPlayer(player), addStickyPost(post)]);
+    const [, evicted] = await Promise.all([setPlayer(player), addStickyPost(post)]);
+
+    // Subtract vote totals for any posts that were pushed off the board
+    if (evicted.length > 0) {
+      await Promise.all(
+        evicted.map(async (old) => {
+          if ((old.updoots ?? 0) === 0 && (old.downdoots ?? 0) === 0) return;
+          const oldAuthor = await getPlayer(old.author);
+          if (!oldAuthor) return;
+          oldAuthor.totalUpdootsReceived = Math.max(
+            0,
+            (oldAuthor.totalUpdootsReceived ?? 0) - (old.updoots ?? 0),
+          );
+          oldAuthor.totalDowndootsReceived = Math.max(
+            0,
+            (oldAuthor.totalDowndootsReceived ?? 0) - (old.downdoots ?? 0),
+          );
+          await setPlayer(oldAuthor);
+        }),
+      );
+    }
+
     return res.status(200).json({ ok: true, balance: player.balance, post });
   }
 

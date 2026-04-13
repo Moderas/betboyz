@@ -40,6 +40,8 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
       inventory: [],
       equippedItems: {},
       totalStickyPostsPosted: 0,
+      totalUpdootsReceived: 0,
+      totalDowndootsReceived: 0,
     };
 
     await setPlayer(player);

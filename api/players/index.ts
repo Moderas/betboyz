@@ -20,6 +20,8 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
       inventory: p!.inventory ?? [],
       equippedItems: p!.equippedItems ?? {},
       totalStickyPostsPosted: p!.totalStickyPostsPosted ?? 0,
+      totalUpdootsReceived: p!.totalUpdootsReceived ?? 0,
+      totalDowndootsReceived: p!.totalDowndootsReceived ?? 0,
     }))
     .sort((a, b) => b.balance - a.balance);
 

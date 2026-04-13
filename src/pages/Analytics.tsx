@@ -97,7 +97,7 @@ export default function Analytics() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                    {['Player', 'Bets', 'Wagered', 'Wins', 'Win %', 'Net P&L'].map((h) => (
+                    {['Player', 'Bets', 'Wagered', 'Wins', 'Win %', 'Net P&L', '👍', '👎'].map((h) => (
                       <th
                         key={h}
                         style={{
@@ -119,7 +119,7 @@ export default function Analytics() {
                 <tbody>
                   {players.length === 0 ? (
                     <tr>
-                      <td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-muted)' }}>
+                      <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-muted)' }}>
                         No closed bets yet — check back after some bets wrap up.
                       </td>
                     </tr>
@@ -163,6 +163,12 @@ export default function Analytics() {
                         </td>
                         <td style={{ padding: '0.7rem 1.25rem', textAlign: 'right' }}>
                           <PnlCell value={p.netProfitLoss} />
+                        </td>
+                        <td style={{ padding: '0.7rem 1.25rem', textAlign: 'right', color: 'var(--color-green)', fontWeight: 600 }}>
+                          {p.totalUpdootsReceived ?? 0}
+                        </td>
+                        <td style={{ padding: '0.7rem 1.25rem', textAlign: 'right', color: 'var(--color-red)', fontWeight: 600 }}>
+                          {p.totalDowndootsReceived ?? 0}
                         </td>
                       </tr>
                     ))

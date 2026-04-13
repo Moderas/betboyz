@@ -13,6 +13,8 @@ export interface PlayerRecord {
   inventory: string[];
   equippedItems: EquippedItems;
   totalStickyPostsPosted: number;
+  totalUpdootsReceived: number;
+  totalDowndootsReceived: number;
 }
 
 export interface PlayerPublic {
@@ -24,6 +26,8 @@ export interface PlayerPublic {
   inventory: string[];
   equippedItems: EquippedItems;
   totalStickyPostsPosted: number;
+  totalUpdootsReceived: number;
+  totalDowndootsReceived: number;
 }
 
 export interface StickyPost {
@@ -31,6 +35,9 @@ export interface StickyPost {
   author: string;
   text: string;
   createdAt: number;
+  updoots: number;
+  downdoots: number;
+  votes: Record<string, 'up' | 'down'>;
 }
 
 export interface StickyPostWithPlayer extends StickyPost {
@@ -81,6 +88,8 @@ export interface PlayerAnalytics {
   losses: number;
   winRate: number;
   netProfitLoss: number;
+  totalUpdootsReceived: number;
+  totalDowndootsReceived: number;
 }
 
 export interface Session {

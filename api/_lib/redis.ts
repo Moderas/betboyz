@@ -106,21 +106,30 @@ export async function getStickyPost(postId: string): Promise<StickyPost | null> 
   return getRedis().get<StickyPost>(SPK(postId));
 }
 
-export async function addStickyPost(post: StickyPost): Promise<void> {
+export async function setStickyPost(post: StickyPost): Promise<void> {
+  await getRedis().set(SPK(post.id), post);
+}
+
+/** Adds a post and trims to MAX_STICKY_POSTS. Returns any posts that were evicted. */
+export async function addStickyPost(post: StickyPost): Promise<StickyPost[]> {
   const r = getRedis();
   await r.set(SPK(post.id), post);
   await r.zadd(SPZK(), { score: post.createdAt, member: post.id });
-  // Trim to MAX_STICKY_POSTS: zrange returns oldest first (no rev)
+  // zrange returns oldest first (ascending score)
   const allIds = await r.zrange(SPZK(), 0, -1);
+  const evicted: StickyPost[] = [];
   if (allIds.length > MAX_STICKY_POSTS) {
-    const toDelete = allIds.slice(0, allIds.length - MAX_STICKY_POSTS);
+    const toDeleteIds = allIds.slice(0, allIds.length - MAX_STICKY_POSTS) as string[];
+    const evictedPosts = await Promise.all(toDeleteIds.map((id) => r.get<StickyPost>(SPK(id))));
+    evicted.push(...(evictedPosts.filter(Boolean) as StickyPost[]));
     await Promise.all(
-      toDelete.map(async (id) => {
-        await r.zrem(SPZK(), id as string);
-        await r.del(SPK(id as string));
+      toDeleteIds.map(async (id) => {
+        await r.zrem(SPZK(), id);
+        await r.del(SPK(id));
       }),
     );
   }
+  return evicted;
 }
 
 export async function deleteStickyPost(postId: string): Promise<void> {

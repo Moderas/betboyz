@@ -76,6 +76,7 @@ app.get('/api/analytics', wrap(analytics));
 
 // Sticky posts
 app.get('/api/stickyposts', wrap(stickyposts));
+app.post('/api/stickyposts', wrap(stickyposts));
 app.delete('/api/stickyposts', wrap(stickyposts));
 
 const PORT = 3001;

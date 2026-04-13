@@ -21,6 +21,8 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
     losses: 0,
     winRate: 0,
     netProfitLoss: 0,
+    totalUpdootsReceived: player.totalUpdootsReceived ?? 0,
+    totalDowndootsReceived: player.totalDowndootsReceived ?? 0,
   };
 
   for (const betId of closedIds) {
@@ -63,6 +65,8 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
     inventory: player.inventory ?? [],
     equippedItems: player.equippedItems ?? {},
     totalStickyPostsPosted: player.totalStickyPostsPosted ?? 0,
+    totalUpdootsReceived: player.totalUpdootsReceived ?? 0,
+    totalDowndootsReceived: player.totalDowndootsReceived ?? 0,
   };
 
   return res.status(200).json({ player: publicPlayer, stats });
