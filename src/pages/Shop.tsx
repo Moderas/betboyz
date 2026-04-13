@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useApi } from '../hooks/useApi';
 import { useToast } from '../components/Toast';
-import { SHOP_ITEMS, SHOP_CATEGORIES } from '../utils/shopItems';
+import { SHOP_ITEMS, SHOP_CATEGORIES, TOYS, ACTIVE_TOYS_EVENT } from '../utils/shopItems';
 import { SIDEBAR_REFRESH_EVENT } from '../components/StickyPostSidebar';
 import { COLOR_SCHEME_EVENT } from '../components/Layout';
 import type { EquippedItems } from '../types';
@@ -25,6 +25,8 @@ export default function Shop() {
   const [showPostForm, setShowPostForm] = useState(false);
   const [postText, setPostText] = useState('');
   const [postBusy, setPostBusy] = useState(false);
+  const [activeToys, setActiveToys] = useState<string[]>([]);
+  const [busyToy, setBusyToy] = useState<string | null>(null);
 
   useEffect(() => {
     if (!session) return;
@@ -34,6 +36,7 @@ export default function Shop() {
         setInventory(d.player?.inventory ?? []);
         setEquippedItems(d.player?.equippedItems ?? {});
         setBalance(d.player?.balance ?? null);
+        setActiveToys(d.player?.activeToys ?? []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -102,6 +105,57 @@ export default function Shop() {
       toast(err instanceof Error ? err.message : 'Post failed', 'error');
     } finally {
       setPostBusy(false);
+    }
+  };
+
+  const handleToy = async (toyId: string) => {
+    setBusyToy(toyId);
+    try {
+      const result = await apiFetch<{
+        ok: boolean;
+        balance: number;
+        inventory?: string[];
+        activeToys?: string[];
+        taxResults?: Record<string, number>;
+      }>('/api/shop', { method: 'POST', body: JSON.stringify({ action: 'toy', itemId: toyId }) });
+      setBalance(result.balance);
+      updateBalance(result.balance);
+      if (result.inventory) setInventory(result.inventory);
+      if (result.activeToys) {
+        setActiveToys(result.activeToys);
+        window.dispatchEvent(new CustomEvent(ACTIVE_TOYS_EVENT, { detail: result.activeToys }));
+      }
+      const toy = TOYS.find((t) => t.id === toyId)!;
+      if (toy.id === 'toy_tax_man') {
+        const victims = Object.keys(result.taxResults ?? {}).length;
+        toast(`Tax Man collected from ${victims} player${victims !== 1 ? 's' : ''}!`, 'success');
+      } else if (toy.kind === 'persistent') {
+        toast(`${toy.name} bought & activated!`, 'success');
+      } else {
+        toast(`${toy.name} unleashed!`, 'success');
+      }
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed', 'error');
+    } finally {
+      setBusyToy(null);
+    }
+  };
+
+  const handleToggleToy = async (toyId: string) => {
+    setBusyToy(toyId);
+    try {
+      const result = await apiFetch<{ ok: boolean; activeToys: string[] }>(
+        '/api/shop',
+        { method: 'POST', body: JSON.stringify({ action: 'toggletoy', itemId: toyId }) },
+      );
+      setActiveToys(result.activeToys);
+      window.dispatchEvent(new CustomEvent(ACTIVE_TOYS_EVENT, { detail: result.activeToys }));
+      const isNowActive = result.activeToys.includes(toyId);
+      toast(isNowActive ? 'Toy activated!' : 'Toy deactivated.', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed', 'error');
+    } finally {
+      setBusyToy(null);
     }
   };
 
@@ -224,6 +278,123 @@ export default function Shop() {
           <span className="text-gold" style={{ fontWeight: 800, fontSize: '1.3rem' }}>
             {balance.toLocaleString()} ₪
           </span>
+        </div>
+      )}
+
+      {/* Toys section */}
+      {session && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div>
+            <h2 style={{ margin: '0 0 0.2rem', fontSize: '1.1rem', fontWeight: 800 }}>
+              🧸 Toys
+            </h2>
+            <p className="text-muted" style={{ margin: 0, fontSize: '0.82rem' }}>
+              One-shot chaos and persistent mayhem. Effects are broadcast to all logged-in players.
+            </p>
+          </div>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(260px,1fr))',
+              gap: '0.75rem',
+            }}
+          >
+            {TOYS.map((toy) => {
+              const owned = inventory.includes(toy.id);
+              const isActive = activeToys.includes(toy.id);
+              const busy = busyToy === toy.id;
+              const canAfford = balance !== null && balance >= toy.price;
+
+              return (
+                <div
+                  key={toy.id}
+                  className="card"
+                  style={{
+                    padding: '1rem',
+                    border: isActive
+                      ? '1px solid rgba(74,158,255,0.5)'
+                      : '1px solid var(--color-border)',
+                    background: isActive ? 'rgba(74,158,255,0.06)' : 'var(--color-bg-card)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.6rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <span style={{ fontSize: '1.8rem', lineHeight: 1 }}>{toy.preview}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                        {toy.name}
+                        {toy.kind === 'persistent' && owned && (
+                          <span
+                            style={{
+                              fontSize: '0.68rem',
+                              padding: '0.1rem 0.45rem',
+                              borderRadius: '9999px',
+                              background: isActive ? 'rgba(74,158,255,0.15)' : 'rgba(245,200,66,0.1)',
+                              color: isActive ? 'var(--color-blue)' : 'var(--color-gold-dim)',
+                              border: `1px solid ${isActive ? 'rgba(74,158,255,0.3)' : 'rgba(245,200,66,0.2)'}`,
+                            }}
+                          >
+                            {isActive ? 'ON' : 'OFF'}
+                          </span>
+                        )}
+                        {toy.kind === 'consumable' && (
+                          <span
+                            style={{
+                              fontSize: '0.68rem',
+                              padding: '0.1rem 0.45rem',
+                              borderRadius: '9999px',
+                              background: 'rgba(255,87,87,0.1)',
+                              color: 'var(--color-red)',
+                              border: '1px solid rgba(255,87,87,0.2)',
+                            }}
+                          >
+                            CONSUMABLE
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-muted" style={{ fontSize: '0.78rem', marginTop: '0.1rem' }}>
+                        {toy.description}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
+                    <span
+                      style={{
+                        fontWeight: 700,
+                        fontSize: '0.95rem',
+                        color: (toy.kind === 'persistent' && owned) ? 'var(--color-text-muted)' : canAfford ? 'var(--color-gold)' : 'var(--color-red)',
+                      }}
+                    >
+                      {toy.kind === 'persistent' && owned ? 'Owned' : `${toy.price.toLocaleString()} ₪`}
+                    </span>
+
+                    {toy.kind === 'persistent' && owned ? (
+                      <button
+                        className={`btn btn-sm ${isActive ? 'btn-outline' : ''}`}
+                        style={!isActive ? { background: 'var(--color-blue-dim)', color: '#fff' } : undefined}
+                        onClick={() => handleToggleToy(toy.id)}
+                        disabled={busy}
+                      >
+                        {busy ? '…' : isActive ? 'Turn Off' : 'Turn On'}
+                      </button>
+                    ) : (
+                      <button
+                        className="btn btn-gold btn-sm"
+                        onClick={() => handleToy(toy.id)}
+                        disabled={busy || !canAfford}
+                        title={!canAfford ? 'Not enough shekels' : undefined}
+                      >
+                        {busy ? '…' : toy.kind === 'persistent' ? 'Buy & Activate' : 'Activate'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

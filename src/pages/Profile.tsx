@@ -166,6 +166,15 @@ export default function Profile() {
               value: `👎 ${fmt(player.totalDowndootsReceived ?? 0)}`,
               color: 'var(--color-red)',
             },
+            {
+              label: 'Toys Used',
+              value: `🧸 ${fmt(stats.totalToysUsed ?? 0)}`,
+            },
+            {
+              label: 'Total Tax Paid',
+              value: `🧾 ${fmt(stats.totalTaxPaid ?? 0)} ₪`,
+              color: (stats.totalTaxPaid ?? 0) > 0 ? 'var(--color-red)' : undefined,
+            },
           ].map((s) => (
             <div key={s.label} className="card" style={{ padding: '1rem', textAlign: 'center' }}>
               <div

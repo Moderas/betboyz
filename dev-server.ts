@@ -28,6 +28,7 @@ import playersUsername from './api/players/[username].js';
 import bank from './api/bank.js';
 import analytics from './api/analytics.js';
 import stickyposts from './api/stickyposts.js';
+import effects from './api/effects.js';
 
 const app = express();
 app.use(express.json());
@@ -78,6 +79,9 @@ app.get('/api/analytics', wrap(analytics));
 app.get('/api/stickyposts', wrap(stickyposts));
 app.post('/api/stickyposts', wrap(stickyposts));
 app.delete('/api/stickyposts', wrap(stickyposts));
+
+// Effects (toys broadcast)
+app.get('/api/effects', wrap(effects));
 
 const PORT = 3001;
 app.listen(PORT, () => {

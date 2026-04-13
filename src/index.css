@@ -502,3 +502,49 @@ body {
     display: none !important;
   }
 }
+
+/* ── Toy Effects ─────────────────────────────────────────────── */
+
+/* Bouncing Billion — X axis (width - mascot size ≈ calc(100% - 72px)) */
+@keyframes bounce-x {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(calc(100vw - 72px)); }
+}
+
+/* Bouncing Billion — Y axis */
+@keyframes bounce-y {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(calc(100vh - 72px)); }
+}
+
+.bounce-x {
+  animation: bounce-x 3.7s linear infinite alternate;
+}
+
+.bounce-y {
+  animation: bounce-y 5.1s linear infinite alternate;
+}
+
+/* Uooohhh Storm — emoji rain */
+@keyframes storm-fall {
+  0%   { transform: translateY(-3rem) rotate(-10deg); opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(110vh) rotate(10deg); opacity: 0; }
+}
+
+.storm-drop {
+  animation-name: storm-fall;
+  will-change: transform;
+  user-select: none;
+}
+
+/* Big Head Mode — bounce-in entrance */
+@keyframes bighead-pop {
+  0%   { transform: scale(0); opacity: 0; }
+  60%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.bighead-mascot {
+  animation: bighead-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}

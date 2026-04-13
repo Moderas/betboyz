@@ -5,6 +5,7 @@ import type {
   WagerRecord,
   GlobalAnalytics,
   StickyPost,
+  EffectRecord,
 } from '../../src/types/index.js';
 
 let _redis: Redis | null = null;
@@ -26,6 +27,7 @@ const WK = (id: string) => `betboyz:bet:${id}:wagers`;
 const SK = (token: string) => `betboyz:session:${token}`;
 const SPZK = () => 'betboyz:stickyposts';
 const SPK = (id: string) => `betboyz:stickypost:${id}`;
+const EK = () => 'betboyz:effects';
 
 const MAX_STICKY_POSTS = 5;
 
@@ -135,6 +137,29 @@ export async function addStickyPost(post: StickyPost): Promise<StickyPost[]> {
 export async function deleteStickyPost(postId: string): Promise<void> {
   const r = getRedis();
   await Promise.all([r.zrem(SPZK(), postId), r.del(SPK(postId))]);
+}
+
+// ── Effects (toys broadcast) ──────────────────────────────────────────────────
+/** Returns all active effects (expiresAt > now). Prunes expired ones. */
+export async function getActiveEffects(): Promise<EffectRecord[]> {
+  const r = getRedis();
+  const all = (await r.get<EffectRecord[]>(EK())) ?? [];
+  const now = Date.now();
+  const active = all.filter((e) => e.expiresAt > now);
+  if (active.length !== all.length) {
+    await r.set(EK(), active);
+  }
+  return active;
+}
+
+/** Adds an effect, prunes expired ones, and persists. */
+export async function addEffect(effect: EffectRecord): Promise<void> {
+  const r = getRedis();
+  const all = (await r.get<EffectRecord[]>(EK())) ?? [];
+  const now = Date.now();
+  const active = all.filter((e) => e.expiresAt > now);
+  active.push(effect);
+  await r.set(EK(), active);
 }
 
 // ── Global analytics ─────────────────────────────────────────────────────────

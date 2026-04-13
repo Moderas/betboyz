@@ -2,8 +2,13 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Mascot from './Mascot';
 import StickyPostSidebar from './StickyPostSidebar';
+import EffectOverlay from './EffectOverlay';
+import BouncingBillion from './BouncingBillion';
+import { useToast } from './Toast';
 import { COLOR_SCHEME_VARS } from '../utils/shopItems';
-import { useEffect, useState } from 'react';
+import { ACTIVE_TOYS_EVENT } from '../utils/shopItems';
+import { useEffect, useState, useRef } from 'react';
+import type { EffectRecord } from '../types';
 
 export const COLOR_SCHEME_EVENT = 'colorscheme:changed';
 
@@ -43,16 +48,21 @@ export default function Layout() {
   const { session, logout, updateBalance } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const toast = useToast();
   const [colorSchemeId, setColorSchemeId] = useState<string | null>(null);
+  const [activeEffects, setActiveEffects] = useState<EffectRecord[]>([]);
+  const [activeToys, setActiveToys] = useState<string[]>([]);
+  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     trackPageVisit(location.pathname);
   }, [location.pathname]);
 
-  // Fetch player data on login: hydrate balance + apply color scheme
+  // Fetch player data on login: hydrate balance + apply color scheme + init activeToys
   useEffect(() => {
     if (!session) {
       setColorSchemeId(null);
+      setActiveToys([]);
       return;
     }
     fetch(`/api/players/${session.username}`)
@@ -60,6 +70,7 @@ export default function Layout() {
       .then((d) => {
         if (d.player?.balance !== undefined) updateBalance(d.player.balance);
         setColorSchemeId(d.player?.equippedItems?.colorScheme ?? null);
+        setActiveToys(d.player?.activeToys ?? []);
       })
       .catch(() => null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -77,8 +88,82 @@ export default function Layout() {
     return () => window.removeEventListener(COLOR_SCHEME_EVENT, handler);
   }, []);
 
+  // Listen for active-toys changes triggered by the Shop (toggle / buy)
+  useEffect(() => {
+    const handler = (e: Event) => setActiveToys((e as CustomEvent<string[]>).detail);
+    window.addEventListener(ACTIVE_TOYS_EVENT, handler);
+    return () => window.removeEventListener(ACTIVE_TOYS_EVENT, handler);
+  }, []);
+
+  useEffect(() => {
+    if (!session) return;
+
+    let lastBalance = session.balance ?? 0;
+
+    const runPoll = async () => {
+      // Check effects
+      try {
+        const res = await fetch('/api/effects');
+        if (res.ok) {
+          const data = await res.json() as { effects: EffectRecord[] };
+          setActiveEffects(data.effects ?? []);
+        }
+      } catch { /* silent */ }
+
+      // Check balance for tax deductions
+      try {
+        const res = await fetch(`/api/players/${session.username}`);
+        if (res.ok) {
+          const d = await res.json();
+          if (d.player?.balance !== undefined) {
+            const newBalance = d.player.balance as number;
+            if (newBalance < lastBalance) {
+              const diff = lastBalance - newBalance;
+              toast(`The Tax Man took ${diff.toLocaleString()} ₪ from you!`, 'error');
+            }
+            lastBalance = newBalance;
+            updateBalance(newBalance);
+          }
+        }
+      } catch { /* silent */ }
+    };
+
+    const schedule = () => {
+      pollTimerRef.current = setTimeout(async () => {
+        if (!document.hidden) {
+          await runPoll();
+        }
+        schedule();
+      }, 30_000);
+    };
+
+    // Run once immediately, then start the loop
+    runPoll();
+    schedule();
+
+    const onVisibilityChange = () => {
+      if (!document.hidden) {
+        // Tab became visible — poll immediately
+        runPoll();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.username]);
+
+  const bouncingBillionActive = activeToys.includes('toy_bouncing_billion');
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Global effect overlays */}
+      <EffectOverlay effects={activeEffects} />
+      {bouncingBillionActive && <BouncingBillion />}
+
       <header
         style={{
           background: 'var(--color-bg-card)',

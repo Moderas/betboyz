@@ -42,6 +42,9 @@ export default handle(async function handler(req: VercelRequest, res: VercelResp
       totalStickyPostsPosted: 0,
       totalUpdootsReceived: 0,
       totalDowndootsReceived: 0,
+      activeToys: [],
+      totalToysUsed: 0,
+      totalTaxPaid: 0,
     };
 
     await setPlayer(player);

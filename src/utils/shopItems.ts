@@ -1,4 +1,4 @@
-import type { ShopCategory } from '../types';
+import type { ShopCategory, EffectType } from '../types';
 
 export interface ShopItem {
   id: string;
@@ -69,6 +69,61 @@ export const SHOP_CATEGORIES: { key: ShopCategory; label: string; description: s
   { key: 'profileBorder', label: 'Profile Borders',  description: 'Glowing border effect on your profile card.' },
   { key: 'colorScheme',   label: 'Color Schemes',    description: 'Swap out the gold for a different accent color on your profile.' },
 ];
+
+export const ACTIVE_TOYS_EVENT = 'toys:active-changed';
+
+export interface ToyItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  preview: string;
+  /** 'persistent' = owned + toggleable (e.g. Bouncing Billion). 'consumable' = triggers effect on use. */
+  kind: 'persistent' | 'consumable';
+  /** For consumables that broadcast effects — the EffectType dispatched */
+  effectType?: EffectType;
+}
+
+export const TOYS: ToyItem[] = [
+  {
+    id: 'toy_bouncing_billion',
+    name: 'Bouncing Billion',
+    description: 'A mascot clone bounces around your screen like a DVD logo screensaver. Toggle it on or off.',
+    price: 500,
+    preview: '📀',
+    kind: 'persistent',
+  },
+  {
+    id: 'toy_uooohhh_storm',
+    name: 'Uooohhh Storm',
+    description: 'Floods every logged-in screen with 😭 emojis for 30 seconds. Maximum chaos.',
+    price: 50,
+    preview: '😭',
+    kind: 'consumable',
+    effectType: 'storm',
+  },
+  {
+    id: 'toy_tax_man',
+    name: 'Tax Man',
+    description: 'Deducts 1% (min 1 ₪) from every player\'s balance except yours. They\'ll know.',
+    price: 100,
+    preview: '🧾',
+    kind: 'consumable',
+  },
+  {
+    id: 'toy_big_head',
+    name: 'Big Head Mode',
+    description: 'Giant mascots invade every screen for 20 seconds. Absolute menace.',
+    price: 50,
+    preview: '🗿',
+    kind: 'consumable',
+    effectType: 'bighead',
+  },
+];
+
+export const TOYS_BY_ID: Record<string, ToyItem> = Object.fromEntries(
+  TOYS.map((t) => [t.id, t]),
+);
 
 // CSS variable overrides applied to the profile page when the player has a color scheme equipped
 export const COLOR_SCHEME_VARS: Record<string, Record<string, string>> = {

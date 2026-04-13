@@ -2,6 +2,15 @@ export type ShopCategory = 'emoji' | 'colorScheme' | 'nameAnimation' | 'profileT
 
 export type EquippedItems = Partial<Record<ShopCategory, string>>;
 
+export type EffectType = 'storm' | 'bighead';
+
+export interface EffectRecord {
+  id: string;
+  type: EffectType;
+  triggeredBy: string;
+  expiresAt: number;
+}
+
 export interface PlayerRecord {
   username: string;
   pinHash: string;
@@ -15,6 +24,9 @@ export interface PlayerRecord {
   totalStickyPostsPosted: number;
   totalUpdootsReceived: number;
   totalDowndootsReceived: number;
+  activeToys: string[];
+  totalToysUsed: number;
+  totalTaxPaid: number;
 }
 
 export interface PlayerPublic {
@@ -28,6 +40,9 @@ export interface PlayerPublic {
   totalStickyPostsPosted: number;
   totalUpdootsReceived: number;
   totalDowndootsReceived: number;
+  activeToys: string[];
+  totalToysUsed: number;
+  totalTaxPaid: number;
 }
 
 export interface StickyPost {
@@ -90,6 +105,8 @@ export interface PlayerAnalytics {
   netProfitLoss: number;
   totalUpdootsReceived: number;
   totalDowndootsReceived: number;
+  totalToysUsed: number;
+  totalTaxPaid: number;
 }
 
 export interface Session {

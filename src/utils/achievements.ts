@@ -1,5 +1,5 @@
 import type { PlayerAnalytics, PlayerPublic } from '../types';
-import { SHOP_ITEMS_BY_ID } from './shopItems';
+import { SHOP_ITEMS_BY_ID, TOYS_BY_ID } from './shopItems';
 
 export interface Achievement {
   id: string;
@@ -29,7 +29,7 @@ export function computeAchievements(
   const ageMs = Date.now() - player.createdAt;
   const ageDays = ageMs / (1000 * 60 * 60 * 24);
   const totalShopSpent =
-    (player.inventory ?? []).reduce((sum, id) => sum + (SHOP_ITEMS_BY_ID[id]?.price ?? 0), 0) +
+    (player.inventory ?? []).reduce((sum, id) => sum + (SHOP_ITEMS_BY_ID[id]?.price ?? TOYS_BY_ID[id]?.price ?? 0), 0) +
     (player.totalStickyPostsPosted ?? 0) * 10;
   const hasDripCheck = EQUIPPABLE_CATEGORIES.every((cat) => !!player.equippedItems?.[cat]);
 
@@ -166,6 +166,41 @@ export function computeAchievements(
       name: 'Drip Check',
       description: 'Have at least one item equipped in every cosmetic category.',
       earned: hasDripCheck,
+    },
+    {
+      id: 'first_toy',
+      icon: '🧸',
+      name: 'First Toy',
+      description: 'Use a toy for the first time.',
+      earned: (stats.totalToysUsed ?? 0) >= 1,
+    },
+    {
+      id: 'mayhem_maker',
+      icon: '🔥',
+      name: 'Mayhem Maker',
+      description: 'Use 5 or more toys.',
+      earned: (stats.totalToysUsed ?? 0) >= 5,
+    },
+    {
+      id: 'dvd_era',
+      icon: '📀',
+      name: 'DVD Era',
+      description: 'Own the Bouncing Billion.',
+      earned: (player.inventory ?? []).includes('toy_bouncing_billion'),
+    },
+    {
+      id: 'tax_victim',
+      icon: '🧾',
+      name: 'Tax Victim',
+      description: 'Pay at least 10 shekels in taxes.',
+      earned: (stats.totalTaxPaid ?? 0) >= 10,
+    },
+    {
+      id: 'deep_in_the_red',
+      icon: '📉',
+      name: 'Deep in the Red',
+      description: 'Pay 100 or more shekels in taxes.',
+      earned: (stats.totalTaxPaid ?? 0) >= 100,
     },
   ];
 }
