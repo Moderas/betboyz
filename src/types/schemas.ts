@@ -20,7 +20,7 @@ export const registerSchema = z.object({
 
 export const createBetSchema = z.object({
   description: z.string().min(5, 'At least 5 characters').max(200, 'Max 200 characters'),
-  minimumBet: z.number({ invalid_type_error: 'Must be a number' }).int().min(1, 'Minimum 1').max(100_000),
+  minimumBet: z.coerce.number({ invalid_type_error: 'Must be a number' }).int().min(1, 'Minimum 1').max(100_000),
   options: z
     .array(z.string().min(1, 'Option cannot be empty').max(80, 'Max 80 characters'))
     .min(2, 'Need at least 2 options')
@@ -28,6 +28,6 @@ export const createBetSchema = z.object({
 });
 
 export const wagerSchema = z.object({
-  optionIndex: z.number().int().min(0),
-  amount: z.number({ invalid_type_error: 'Must be a number' }).int().min(1),
+  optionIndex: z.coerce.number().int().min(0),
+  amount: z.coerce.number({ invalid_type_error: 'Must be a number' }).int().min(1),
 });
