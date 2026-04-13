@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Mascot from './Mascot';
 import { useEffect } from 'react';
@@ -20,12 +20,26 @@ function trackPageVisit(pathname: string) {
 }
 
 export default function Layout() {
-  const { session, logout } = useAuth();
+  const { session, logout, updateBalance } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     trackPageVisit(location.pathname);
   }, [location.pathname]);
+
+  // If the stored session pre-dates the balance field, fetch it once
+  useEffect(() => {
+    if (session && (session.balance === undefined || session.balance === null)) {
+      fetch(`/api/players/${session.username}`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.player?.balance !== undefined) updateBalance(d.player.balance);
+        })
+        .catch(() => null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.username]);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -78,13 +92,6 @@ export default function Layout() {
           >
             Analytics
           </NavLink>
-          <NavLink
-            to="/shop"
-            className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-          >
-            Shop
-          </NavLink>
-
           {session ? (
             <>
               <NavLink
@@ -110,8 +117,24 @@ export default function Layout() {
                   fontVariantNumeric: 'tabular-nums',
                 }}
               >
-                {session.balance != null ? `${session.balance.toLocaleString()} ₪` : '— ₪'}
+                {session.balance != null && session.balance !== undefined
+                  ? `${(session.balance as number).toLocaleString()} ₪`
+                  : '… ₪'}
               </div>
+
+              {/* Shop button */}
+              <button
+                onClick={() => navigate('/shop')}
+                className="btn btn-sm"
+                style={{
+                  background: 'rgba(74,158,255,0.15)',
+                  border: '1px solid rgba(74,158,255,0.35)',
+                  color: 'var(--color-blue)',
+                  fontWeight: 700,
+                }}
+              >
+                🛍️ Shop
+              </button>
 
               <NavLink
                 to={`/player/${session.username}`}
