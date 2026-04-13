@@ -4,6 +4,7 @@ import { useApi } from '../hooks/useApi';
 import { useToast } from '../components/Toast';
 import { SHOP_ITEMS, SHOP_CATEGORIES } from '../utils/shopItems';
 import { SIDEBAR_REFRESH_EVENT } from '../components/StickyPostSidebar';
+import { COLOR_SCHEME_EVENT } from '../components/Layout';
 import type { EquippedItems } from '../types';
 import type { ShopCategory } from '../types';
 
@@ -53,6 +54,9 @@ export default function Shop() {
       updateBalance(result.balance);
       const item = SHOP_ITEMS.find((i) => i.id === itemId)!;
       toast(`Bought & equipped "${item.name}"!`, 'success');
+      if (item.category === 'colorScheme') {
+        window.dispatchEvent(new CustomEvent(COLOR_SCHEME_EVENT, { detail: result.equippedItems.colorScheme ?? null }));
+      }
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Purchase failed', 'error');
     } finally {
@@ -69,6 +73,10 @@ export default function Shop() {
       );
       setEquippedItems(result.equippedItems);
       toast(itemId ? 'Item equipped!' : 'Item unequipped.', 'success');
+      const item = itemId ? SHOP_ITEMS.find((i) => i.id === itemId) : null;
+      if (item?.category === 'colorScheme' || category === 'colorScheme') {
+        window.dispatchEvent(new CustomEvent(COLOR_SCHEME_EVENT, { detail: result.equippedItems.colorScheme ?? null }));
+      }
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Equip failed', 'error');
     } finally {

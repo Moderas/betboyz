@@ -2,7 +2,25 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Mascot from './Mascot';
 import StickyPostSidebar from './StickyPostSidebar';
-import { useEffect } from 'react';
+import { COLOR_SCHEME_VARS } from '../utils/shopItems';
+import { useEffect, useState } from 'react';
+
+export const COLOR_SCHEME_EVENT = 'colorscheme:changed';
+
+// All CSS variable keys that any color scheme can override
+const SCHEME_VAR_KEYS = Object.keys(Object.values(COLOR_SCHEME_VARS)[0] ?? {});
+
+function applyColorScheme(schemeId: string | null) {
+  if (schemeId && COLOR_SCHEME_VARS[schemeId]) {
+    for (const [k, v] of Object.entries(COLOR_SCHEME_VARS[schemeId])) {
+      document.documentElement.style.setProperty(k, v);
+    }
+  } else {
+    for (const k of SCHEME_VAR_KEYS) {
+      document.documentElement.style.removeProperty(k);
+    }
+  }
+}
 
 function trackPageVisit(pathname: string) {
   const visited: string[] = JSON.parse(localStorage.getItem('betboyz:visited_pages') ?? '[]');
@@ -25,23 +43,39 @@ export default function Layout() {
   const { session, logout, updateBalance } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [colorSchemeId, setColorSchemeId] = useState<string | null>(null);
 
   useEffect(() => {
     trackPageVisit(location.pathname);
   }, [location.pathname]);
 
-  // If the stored session pre-dates the balance field, fetch it once
+  // Fetch player data on login: hydrate balance + apply color scheme
   useEffect(() => {
-    if (session && (session.balance === undefined || session.balance === null)) {
-      fetch(`/api/players/${session.username}`)
-        .then((r) => r.json())
-        .then((d) => {
-          if (d.player?.balance !== undefined) updateBalance(d.player.balance);
-        })
-        .catch(() => null);
+    if (!session) {
+      setColorSchemeId(null);
+      return;
     }
+    fetch(`/api/players/${session.username}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.player?.balance !== undefined) updateBalance(d.player.balance);
+        setColorSchemeId(d.player?.equippedItems?.colorScheme ?? null);
+      })
+      .catch(() => null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.username]);
+
+  // Apply / remove color scheme CSS vars on the root element
+  useEffect(() => {
+    applyColorScheme(colorSchemeId);
+  }, [colorSchemeId]);
+
+  // Listen for scheme changes triggered by the Shop (buy / equip / unequip)
+  useEffect(() => {
+    const handler = (e: Event) => setColorSchemeId((e as CustomEvent<string | null>).detail);
+    window.addEventListener(COLOR_SCHEME_EVENT, handler);
+    return () => window.removeEventListener(COLOR_SCHEME_EVENT, handler);
+  }, []);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
