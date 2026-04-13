@@ -40,6 +40,10 @@ export default function Register() {
         setServerError(json.error ?? 'Registration failed');
         return;
       }
+      if (!json.username || !json.token) {
+        setServerError('Unexpected response from server');
+        return;
+      }
       login(json.username, json.token);
       navigate('/');
     } catch (err) {

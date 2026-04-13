@@ -40,6 +40,10 @@ export default function Login() {
         setServerError(json.error ?? 'Login failed');
         return;
       }
+      if (!json.username || !json.token) {
+        setServerError('Unexpected response from server');
+        return;
+      }
       login(json.username, json.token);
       navigate('/');
     } catch (err) {
