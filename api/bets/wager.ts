@@ -10,9 +10,10 @@ import {
   setGlobalAnalytics,
 } from '../_lib/redis.js';
 import { requireAuth } from '../_lib/auth.js';
+import { handle } from '../_lib/handler.js';
 import type { WagerRecord } from '../../src/types/index.js';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default handle(async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const username = await requireAuth(req);
@@ -71,4 +72,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   ]);
 
   return res.status(200).json({ ok: true, balance: player.balance });
-}
+});

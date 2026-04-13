@@ -7,9 +7,10 @@ import {
   getGlobalAnalytics,
 } from './_lib/redis.js';
 import { calculatePayouts } from './_lib/payout.js';
+import { handle } from './_lib/handler.js';
 import type { PlayerAnalytics } from '../src/types/index.js';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default handle(async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   const [usernames, closedIds, global] = await Promise.all([
@@ -37,7 +38,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { payouts } = calculatePayouts(bet, wagers);
 
-    // Group wagers by player for this bet
     const playerWagers: Record<string, number> = {};
     for (const w of wagers) {
       playerWagers[w.player] = (playerWagers[w.player] ?? 0) + w.amount;
@@ -47,7 +47,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       s.totalShekelsWagered += w.amount;
     }
 
-    // Determine wins/losses per player for this bet
     for (const [pUsername, totalBet] of Object.entries(playerWagers)) {
       const s = playerStats[pUsername];
       if (!s) continue;
@@ -68,4 +67,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   );
 
   return res.status(200).json({ global, players });
-}
+});

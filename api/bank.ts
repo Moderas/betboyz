@@ -1,9 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getPlayer, setPlayer } from './_lib/redis.js';
 import { requireAuth } from './_lib/auth.js';
+import { handle } from './_lib/handler.js';
 import { BANK_AMOUNT, BANK_LIFETIME_LIMIT, EMBARRASSING_PHRASES } from './_lib/bank.js';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default handle(async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const username = await requireAuth(req);
@@ -36,4 +37,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     embarrassingThing: phrase,
     requestsRemaining: BANK_LIFETIME_LIMIT - player.bankRequestCount,
   });
-}
+});

@@ -7,6 +7,11 @@
 import { config } from 'dotenv';
 config(); // load .env before any Redis client is created
 
+if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+  console.error('\n❌  Missing Redis env vars. Copy .env.example → .env and fill in your Upstash credentials.\n');
+  process.exit(1);
+}
+
 import express from 'express';
 import type { Request, Response } from 'express';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -28,9 +33,17 @@ app.use(express.json());
 
 // Wrap a Vercel handler for Express — they're compatible since VercelRequest
 // extends IncomingMessage and VercelResponse extends ServerResponse.
+// Also catches any unhandled errors and returns JSON so the client never
+// receives an HTML error page.
 function wrap(handler: (req: VercelRequest, res: VercelResponse) => unknown) {
-  return (req: Request, res: Response) =>
-    handler(req as unknown as VercelRequest, res as unknown as VercelResponse);
+  return async (req: Request, res: Response) => {
+    try {
+      await handler(req as unknown as VercelRequest, res as unknown as VercelResponse);
+    } catch (err) {
+      console.error('[api error]', err);
+      res.status(500).json({ error: err instanceof Error ? err.message : 'Internal server error' });
+    }
+  };
 }
 
 // Auth

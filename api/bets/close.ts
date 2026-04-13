@@ -9,8 +9,9 @@ import {
 } from '../_lib/redis.js';
 import { requireAuth } from '../_lib/auth.js';
 import { calculatePayouts } from '../_lib/payout.js';
+import { handle } from '../_lib/handler.js';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default handle(async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const username = await requireAuth(req);
@@ -43,7 +44,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { payouts } = calculatePayouts(bet, wagers);
 
-  // Apply payouts to winners
   await Promise.all(
     Object.entries(payouts).map(async ([pUsername, amount]) => {
       const p = await getPlayer(pUsername);
@@ -57,4 +57,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   await Promise.all([setBet(bet), moveToClose(betId, closedAt)]);
 
   return res.status(200).json({ ok: true, payouts });
-}
+});

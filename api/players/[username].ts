@@ -1,9 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getPlayer, getClosedBetIds, getBet, getWagers } from '../_lib/redis.js';
 import { calculatePayouts } from '../_lib/payout.js';
+import { handle } from '../_lib/handler.js';
 import type { PlayerPublic, PlayerAnalytics } from '../../src/types/index.js';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default handle(async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   const { username } = req.query as { username: string };
@@ -59,4 +60,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   };
 
   return res.status(200).json({ player: publicPlayer, stats });
-}
+});

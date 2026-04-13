@@ -2,9 +2,10 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { randomUUID } from 'node:crypto';
 import { getPlayer, setPlayer, addPlayerToIndex, setSession } from '../_lib/redis.js';
 import { hashPin } from '../_lib/auth.js';
+import { handle } from '../_lib/handler.js';
 import type { PlayerRecord } from '../../src/types/index.js';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default handle(async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { username, pin } = req.body as { username?: string; pin?: string };
@@ -39,4 +40,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   await setSession(token, username);
 
   return res.status(201).json({ token, username, balance: player.balance });
-}
+});
