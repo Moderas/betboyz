@@ -35,8 +35,8 @@ export default function Login() {
       }
       login(json.username, json.token);
       navigate('/');
-    } catch {
-      setServerError('Network error — please try again');
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : String(err));
     }
   };
 
