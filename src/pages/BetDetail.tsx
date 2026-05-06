@@ -73,9 +73,9 @@ export default function BetDetail() {
 
   const onWager = async (data: WagerForm) => {
     try {
-      const result = await apiFetch<{ ok: boolean; balance: number }>('/api/bets/wager', {
+      const result = await apiFetch<{ ok: boolean; balance: number }>(`/api/bets/${id}`, {
         method: 'POST',
-        body: JSON.stringify({ betId: id, ...data }),
+        body: JSON.stringify({ action: 'wager', ...data }),
       });
       setBalance(result.balance);
       updateBalance(result.balance);
@@ -91,10 +91,10 @@ export default function BetDetail() {
     setClosing(true);
     try {
       const result = await apiFetch<{ ok: boolean; payouts: Record<string, number> }>(
-        '/api/bets/close',
+        `/api/bets/${id}`,
         {
           method: 'POST',
-          body: JSON.stringify({ betId: id, winningOptionIndex: closingOptionIdx }),
+          body: JSON.stringify({ action: 'close', winningOptionIndex: closingOptionIdx }),
         },
       );
       const winner = bet.options[closingOptionIdx].label;
@@ -112,9 +112,9 @@ export default function BetDetail() {
     if (!bet || !window.confirm('Null this bet? All wagers will be refunded.')) return;
     setNulling(true);
     try {
-      await apiFetch('/api/bets/close', {
+      await apiFetch(`/api/bets/${id}`, {
         method: 'POST',
-        body: JSON.stringify({ betId: id, nullBet: true }),
+        body: JSON.stringify({ action: 'close', nullBet: true }),
       });
       toast('Bet nulled. All wagers refunded.');
       await fetchBet();

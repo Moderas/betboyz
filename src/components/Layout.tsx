@@ -103,7 +103,7 @@ export default function Layout() {
     const runPoll = async () => {
       // Check effects
       try {
-        const res = await fetch('/api/effects');
+        const res = await fetch('/api/shop');
         if (res.ok) {
           const data = await res.json() as { effects: EffectRecord[] };
           setActiveEffects(data.effects ?? []);

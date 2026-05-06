@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { randomUUID } from 'node:crypto';
-import { getPlayer, setPlayer, addStickyPost, addEffect, getAllPlayerUsernames } from './_lib/redis.js';
+import { getPlayer, setPlayer, addStickyPost, addEffect, getAllPlayerUsernames, getActiveEffects } from './_lib/redis.js';
 import { requireAuth } from './_lib/auth.js';
 import { handle } from './_lib/handler.js';
 import { SHOP_ITEMS_BY_ID, TOYS_BY_ID } from '../src/utils/shopItems.js';
@@ -9,6 +9,12 @@ import type { ShopCategory, StickyPost, EffectRecord } from '../src/types/index.
 const STICKYPOST_PRICE = 10;
 
 export default handle(async function handler(req: VercelRequest, res: VercelResponse) {
+  // ── GET — return active effects ───────────────────────────────────────────
+  if (req.method === 'GET') {
+    const effects = await getActiveEffects();
+    return res.status(200).json({ effects });
+  }
+
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const username = await requireAuth(req);

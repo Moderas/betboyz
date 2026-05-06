@@ -20,15 +20,12 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import auth from './api/auth.js';
 import betsIndex from './api/bets/index.js';
 import betsId from './api/bets/[id].js';
-import betsWager from './api/bets/wager.js';
-import betsClose from './api/bets/close.js';
 import shop from './api/shop.js';
 import playersIndex from './api/players/index.js';
 import playersUsername from './api/players/[username].js';
 import bank from './api/bank.js';
 import analytics from './api/analytics.js';
 import stickyposts from './api/stickyposts.js';
-import effects from './api/effects.js';
 
 const app = express();
 app.use(express.json());
@@ -52,11 +49,13 @@ function wrap(handler: (req: VercelRequest, res: VercelResponse) => unknown) {
 app.post('/api/auth', wrap(auth));
 
 // Bets — order matters: specific routes before dynamic ones
-app.post('/api/bets/wager', wrap(betsWager));
-app.post('/api/bets/close', wrap(betsClose));
 app.get('/api/bets', wrap(betsIndex));
 app.post('/api/bets', wrap(betsIndex));
 app.get('/api/bets/:id', (req, res) => {
+  (req as unknown as VercelRequest).query = { id: req.params.id };
+  return betsId(req as unknown as VercelRequest, res as unknown as VercelResponse);
+});
+app.post('/api/bets/:id', (req, res) => {
   (req as unknown as VercelRequest).query = { id: req.params.id };
   return betsId(req as unknown as VercelRequest, res as unknown as VercelResponse);
 });
@@ -69,6 +68,7 @@ app.get('/api/players/:username', (req, res) => {
 });
 
 // Shop
+app.get('/api/shop', wrap(shop));
 app.post('/api/shop', wrap(shop));
 
 // Bank & analytics
@@ -79,9 +79,6 @@ app.get('/api/analytics', wrap(analytics));
 app.get('/api/stickyposts', wrap(stickyposts));
 app.post('/api/stickyposts', wrap(stickyposts));
 app.delete('/api/stickyposts', wrap(stickyposts));
-
-// Effects (toys broadcast)
-app.get('/api/effects', wrap(effects));
 
 const PORT = 3001;
 app.listen(PORT, () => {
